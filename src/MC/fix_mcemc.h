@@ -13,21 +13,21 @@
 
 #ifdef FIX_CLASS
 // clang-format off
-FixStyle(gcmc,FixGCMC);
+FixStyle(mcemc,FixMCEMC);
 // clang-format on
 #else
 
-#ifndef LMP_FIX_GCMC_H
-#define LMP_FIX_GCMC_H
+#ifndef LMP_FIX_MCEMC_H
+#define LMP_FIX_MCEMC_H
 
 #include "fix.h"
 
 namespace LAMMPS_NS {
 
-class FixGCMC : public Fix {
+class FixMCEMC : public Fix {
  public:
-  FixGCMC(class LAMMPS *, int, char **);
-  ~FixGCMC() override;
+  FixMCEMC(class LAMMPS *, int, char **);
+  ~FixMCEMC() override;
   int setmask() override;
   void init() override;
   void pre_exchange() override;
@@ -41,7 +41,7 @@ class FixGCMC : public Fix {
   int molecule_group, molecule_group_bit;
   int molecule_group_inversebit;
   int exclusion_group, exclusion_group_bit;
-  int ngcmc_type, nevery, seed;
+  int nmcemc_type, nevery, seed;
   int ncycles, nexchanges, nmcmoves;
   double patomtrans, pmoltrans, pmolrotate, pmctot;
   int ngas;                // # of gas atoms on all procs
@@ -49,8 +49,8 @@ class FixGCMC : public Fix {
   int ngas_before;         // # of gas atoms on procs < this proc
   int exchmode;            // exchange ATOM or MOLECULE
   int movemode;            // move ATOM or MOLECULE
-  class Region *region;    // gcmc region
-  char *idregion;          // gcmc region id
+  class Region *region;    // mcemc region
+  char *idregion;          // mcemc region id
   bool pressure_flag;      // true if user specified reservoir pressure
   bool charge_flag;        // true if user specified atomic charge
   bool full_flag;          // true if doing full system energy calculations
@@ -76,7 +76,7 @@ class FixGCMC : public Fix {
 
   int mc_active;              // 1 during MC trials, otherwise 0
 
-  int gcmc_nmax;
+  int mcemc_nmax;
   int max_region_attempts;
   double gas_mass;
   double reservoir_temperature;
