@@ -100,8 +100,10 @@ FixMCEMC::FixMCEMC(LAMMPS *lmp, int narg, char **arg) :
   nmcemc_type = utils::expand_type_int(FLERR, arg[6], Atom::ATOM, lmp);
   seed = utils::inumeric(FLERR, arg[7], false, lmp);
   reservoir_temperature = utils::numeric(FLERR, arg[8], false, lmp);
-  chemical_potential = utils::numeric(FLERR, arg[9], false, lmp);
-  displace = utils::numeric(FLERR, arg[10], false, lmp);
+  gaugecell_volume = utils::numeric(FLERR, arg[9], false, lmp);
+  ntotal = utils::numeric(FLERR, arg[10], false, lmp);
+  displace = utils::numeric(FLERR, arg[11], false, lmp);
+
 
   if (nevery <= 0) error->all(FLERR, "Illegal fix mcemc command");
   if (nexchanges < 0) error->all(FLERR, "Illegal fix mcemc command");
@@ -109,6 +111,10 @@ FixMCEMC::FixMCEMC(LAMMPS *lmp, int narg, char **arg) :
   if (seed <= 0) error->all(FLERR, "Illegal fix mcemc command");
   if (reservoir_temperature < 0.0)
     error->all(FLERR, "Illegal fix mcemc command");
+  if (gaugecell_volume < 0.0)
+    error->all(FLERR, "gaugecell_volume must be positive in fix mcemc command");
+  if (ntotal < 0)
+    error->all(FLERR, "ntotal must be positive in fix mcemc command");
   if (displace < 0.0) error->all(FLERR, "Illegal fix mcemc command");
 
   // read options from end of input line

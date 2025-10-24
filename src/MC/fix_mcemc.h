@@ -82,6 +82,8 @@ class FixMCEMC : public Fix {
   double reservoir_temperature;
   double tfac_insert;
   double chemical_potential;
+  double gaugecell_volume;
+  double ntotal;
   double displace;
   double max_rotation_angle;
   double beta, zz, sigma, volume;
