@@ -74,7 +74,7 @@ FixMCEMC::FixMCEMC(LAMMPS *lmp, int narg, char **arg) :
     random_equal(nullptr), random_unequal(nullptr), fixrigid(nullptr), fixshake(nullptr),
     idrigid(nullptr), idshake(nullptr)
 {
-  if (narg < 11) utils::missing_cmd_args(FLERR, "fix mcemc", error);
+  if (narg < 12) utils::missing_cmd_args(FLERR, "fix mcemc", error);
 
   if (atom->molecular == Atom::TEMPLATE)
     error->all(FLERR,"Fix mcemc does not (yet) work with atom_style template");
@@ -111,15 +111,14 @@ FixMCEMC::FixMCEMC(LAMMPS *lmp, int narg, char **arg) :
   if (seed <= 0) error->all(FLERR, "Illegal fix mcemc command");
   if (reservoir_temperature < 0.0)
     error->all(FLERR, "Illegal fix mcemc command");
-  if (gaugecell_volume < 0.0)
-    error->all(FLERR, "gaugecell_volume must be positive in fix mcemc command");
+  if (gaugecell_volume < 0.0) error->all(FLERR, "gaugecell_volume must be positive in fix mcemc command");
   if (ntotal < 0)
     error->all(FLERR, "ntotal must be positive in fix mcemc command");
   if (displace < 0.0) error->all(FLERR, "Illegal fix mcemc command");
 
   // read options from end of input line
 
-  options(narg-11,&arg[11]);
+  options(narg-12,&arg[12]);
 
   // random number generator, same for all procs
 
@@ -941,7 +940,7 @@ void FixMCEMC::attempt_atomic_deletion()
   if (i >= 0) {
     double deletion_energy = energy(i,nmcemc_type,-1,atom->x[i]);
     if (random_unequal->uniform() <
-        ngas*exp(beta*deletion_energy)/(zz*volume)) {
+        gaugecell_volume*ngas*exp(beta*deletion_energy)/((ntotal-ngas+1)*volume)) {
       atom->avec->copy(atom->nlocal-1,i,1);
       atom->nlocal--;
       success = 1;
@@ -1038,7 +1037,7 @@ void FixMCEMC::attempt_atomic_insertion()
 
     if (insertion_energy < MAXENERGYTEST &&
         random_unequal->uniform() <
-        zz*volume*exp(-beta*insertion_energy)/(ngas+1)) {
+        (ntotal-ngas)*volume*exp(-beta*insertion_energy)/(ngas+1)/(gaugecell_volume)) {
       atom->avec->create_atom(nmcemc_type,coord);
       int m = atom->nlocal - 1;
 
@@ -1302,7 +1301,7 @@ void FixMCEMC::attempt_molecule_deletion()
   double deletion_energy_sum = molecule_energy(deletion_molecule);
 
   if (random_equal->uniform() <
-      ngas*exp(beta*deletion_energy_sum)/(zz*volume*natoms_per_molecule)) {
+      gaugecell_volume*ngas*exp(beta*deletion_energy_sum)/((ntotal-ngas+1)*volume*natoms_per_molecule)) {
     int i = 0;
     while (i < atom->nlocal) {
       if (atom->molecule[i] == deletion_molecule) {
@@ -1437,8 +1436,8 @@ void FixMCEMC::attempt_molecule_insertion()
                 MPI_DOUBLE,MPI_SUM,world);
 
   if (insertion_energy_sum < MAXENERGYTEST &&
-      random_equal->uniform() < zz*volume*natoms_per_molecule*
-      exp(-beta*insertion_energy_sum)/(ngas + natoms_per_molecule)) {
+      random_equal->uniform() < (ntotal-ngas)*volume*natoms_per_molecule*
+      exp(-beta*insertion_energy_sum)/(ngas + natoms_per_molecule)/(gaugecell_volume)) {
 
     tagint maxmol = 0;
     for (int i = 0; i < atom->nlocal; i++) maxmol = MAX(maxmol,atom->molecule[i]);
@@ -1634,7 +1633,7 @@ void FixMCEMC::attempt_atomic_deletion_full()
   double energy_after = energy_full();
 
   if (random_equal->uniform() <
-      ngas*exp(beta*(energy_before - energy_after))/(zz*volume)) {
+      gaugecell_volume*ngas*exp(beta*(energy_before - energy_after))/((ntotal-ngas+1)*volume)) {
     if (i >= 0) {
       atom->avec->copy(atom->nlocal-1,i,1);
       atom->nlocal--;
@@ -1750,7 +1749,7 @@ void FixMCEMC::attempt_atomic_insertion_full()
 
   if (energy_after < MAXENERGYTEST &&
       random_equal->uniform() <
-      zz*volume*exp(beta*(energy_before - energy_after))/(ngas+1)) {
+      (ntotal-ngas)*volume*exp(beta*(energy_before - energy_after))/(ngas+1)/(gaugecell_volume)) {
 
     ninsertion_successes += 1.0;
     energy_stored = energy_after;
@@ -2001,7 +2000,7 @@ void FixMCEMC::attempt_molecule_deletion_full()
 
   // energy_before corrected by energy_intra
 
-  double deltaphi = ngas*exp(beta*((energy_before - energy_intra) - energy_after))/(zz*volume*natoms_per_molecule);
+  double deltaphi = gaugecell_volume*ngas*exp(beta*((energy_before - energy_intra) - energy_after))/((ntotal-ngas+1)*volume*natoms_per_molecule);
 
   if (random_equal->uniform() < deltaphi) {
     int i = 0;
@@ -2207,8 +2206,8 @@ void FixMCEMC::attempt_molecule_insertion_full()
 
   // energy_after corrected by energy_intra
 
-  double deltaphi = zz*volume*natoms_per_molecule*
-    exp(beta*(energy_before - (energy_after - energy_intra)))/(ngas + natoms_per_molecule);
+  double deltaphi = (ntotal-ngas)*volume*natoms_per_molecule*
+    exp(beta*(energy_before - (energy_after - energy_intra)))/(ngas + natoms_per_molecule)/(gaugecell_volume);
 
   if (energy_after < MAXENERGYTEST &&
       random_equal->uniform() < deltaphi) {
