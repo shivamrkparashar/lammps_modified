@@ -253,9 +253,6 @@ void FixMCEMC::options(int narg, char **arg)
   molecule_group_inversebit = 0;
   exclusion_group = 0;
   exclusion_group_bit = 0;
-  pressure_flag = false;
-  pressure = 0.0;
-  fugacity_coeff = 1.0;
   rigidflag = 0;
   shakeflag = 0;
   charge = 0.0;
@@ -311,15 +308,6 @@ void FixMCEMC::options(int narg, char **arg)
       if (iarg+2 > narg) error->all(FLERR,"Illegal fix mcemc command");
       max_rotation_angle = utils::numeric(FLERR,arg[iarg+1],false,lmp);
       max_rotation_angle *= MY_PI/180;
-      iarg += 2;
-    } else if (strcmp(arg[iarg],"pressure") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal fix mcemc command");
-      pressure = utils::numeric(FLERR,arg[iarg+1],false,lmp);
-      pressure_flag = true;
-      iarg += 2;
-    } else if (strcmp(arg[iarg],"fugacity_coeff") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal fix mcemc command");
-      fugacity_coeff = utils::numeric(FLERR,arg[iarg+1],false,lmp);
       iarg += 2;
     } else if (strcmp(arg[iarg],"charge") == 0) {
       if (iarg+2 > narg) error->all(FLERR,"Illegal fix mcemc command");
@@ -709,7 +697,6 @@ void FixMCEMC::init()
   }
 
   sigma = sqrt(force->boltz*reservoir_temperature*tfac_insert/gas_mass/force->mvv2e);
-  if (pressure_flag) zz = pressure*fugacity_coeff*beta/force->nktv2p;
 
   imagezero = ((imageint) IMGMAX << IMG2BITS) |
              ((imageint) IMGMAX << IMGBITS) | IMGMAX;
