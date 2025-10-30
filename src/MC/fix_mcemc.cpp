@@ -13,11 +13,11 @@
 ------------------------------------------------------------------------- */
 
 /* ----------------------------------------------------------------------
-   Contributing author: Paul Crozier, Aidan Thompson (SNL)
+   Contributing author: Shivam Parashar (Rutgers University)
 ------------------------------------------------------------------------- */
 
 #include "fix_mcemc.h"
-
+#include "citeme.h"
 #include "angle.h"
 #include "atom.h"
 #include "atom_vec.h"
@@ -65,6 +65,18 @@ static constexpr double MAXENERGYTEST = 1.0e50;
 enum { EXCHATOM, EXCHMOL };          // exchmode
 enum { NONE, MOVEATOM, MOVEMOL };    // movemode
 
+static const char cite_fix_mcemc[] =
+  "fix mcemc command: doi:10.1016/j.jcis.2024.06.083\n\n"
+  "@Article{Parashar,\n"
+  "author = {Parashar, S. and Neimark, A. V.},\n"
+  "title = {Understanding the Origins of Reversible and Hysteretic Pathways of\
+  Adsorption Phase Transitions in Metal-Organic Frameworks},\n"
+  "journal = {Journal of Colloid And Interface Science},\n"
+  "year = {2024},\n"
+  "doi = {10.1016/j.jcis.2024.06.083},\n"
+  "}\n\n";
+
+
 /* ---------------------------------------------------------------------- */
 
 FixMCEMC::FixMCEMC(LAMMPS *lmp, int narg, char **arg) :
@@ -75,6 +87,8 @@ FixMCEMC::FixMCEMC(LAMMPS *lmp, int narg, char **arg) :
     idrigid(nullptr), idshake(nullptr)
 {
   if (narg < 12) utils::missing_cmd_args(FLERR, "fix mcemc", error);
+
+  if (lmp->citeme) lmp->citeme->add(cite_fix_mcemc);
 
   if (atom->molecular == Atom::TEMPLATE)
     error->all(FLERR,"Fix mcemc does not (yet) work with atom_style template");
