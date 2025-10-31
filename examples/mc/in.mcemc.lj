@@ -1,37 +1,42 @@
 # MCEMC for LJ simple fluid, no dynamics
 
-# variables modifiable using -var command line switch
+# Variables modifiable using -var command line switch
+# temp:   reservoir temperature
+# disp:   maximum displacement for MC moves
+# lbox:   simulation box size
+# ntotal: total number of particles (Ngauge + Nsimulation)
+# vgauge: volume of gauge cell
 
-variable        temp equal 2.0
-variable        disp equal 1.0
-variable        lbox equal 5.0
-variable        ntotal equal 80         # ntotal (Ngauge + Nsimulation)
-variable        vgauge equal 1200   # volume of gauge cell
+variable        temp    equal 2.0       # reservoir temperature
+variable        disp    equal 1.0       # maximum displacement
+variable        lbox    equal 5.0       # box size
+variable        ntotal  equal 80        # total particles (Ngauge + Nsimulation)
+variable        vgauge  equal 1200      # volume of gauge cell
 
-# global model settings
+# Global model settings
 
 units           lj
 atom_style      atomic
 pair_style      lj/cut 3.0
-pair_modify     tail no # turn off to avoid triggering full_energy
+pair_modify     tail no        # turn off to avoid triggering full_energy
 
-# box
+# Box setup
 
 region          box block 0 ${lbox} 0 ${lbox} 0 ${lbox}
 create_box      1 box
 
-# lj parameters
+# Lennard-Jones parameters
 
-pair_coeff      * * 1.0 1.0
-mass            * 1.0
+pair_coeff      * * 1.0 1.0          # LJ epsilon=1.0, sigma=1.0
+mass            1 1.0                 # mass for type 1
 
-# we recommend setting up a dedicated group for mcemc
+# Setup dedicated group for MCEMC
 
 group           mcemcgroup type 1
 
-# mcemc
-
-fix             mymcemc mcemcgroup mcemc 1 100 100 1 1234 ${temp} ${vgauge} ${ntotal} ${disp} 
+# MCEMC fix
+# Args: group-ID, style, Nevery, Nexchange, Nmcmoves, type, seed, temp, vgauge, ntotal, disp
+fix             mymcemc mcemcgroup mcemc 1 100 100 1 1234 ${temp} ${vgauge} ${ntotal} ${disp}
 
 # atom count
 
