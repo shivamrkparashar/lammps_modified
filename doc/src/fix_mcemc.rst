@@ -11,7 +11,7 @@ Syntax
    fix ID group-ID mcemc N X M type seed T vgauge ntotal displace keyword values ...
 
 * ID, group-ID are documented in :doc:`fix <fix>` command
-* gcmc = style name of this fix command
+* mcemc = style name of this fix command
 * N = invoke this fix every N steps
 * X = average number of GCMC exchanges to attempt every N steps
 * M = average number of MC moves to attempt every N steps
@@ -67,27 +67,27 @@ Description
 """""""""""
 
 This fix performs mesocanonical Monte Carlo (MCEMC) also known as gauge cell 
-simulation by exchanging particles with a finite volume ideal gas reservoir at
+simulation by exchanging particles with a finite volume ideal gas reservoir (gauge cell) at
 the same temperature as the system as discussed in :ref:`(Parashar) <Parashar>`.
 It also attempts Monte Carlo moves (translations and rotations) of particles
 within the simulation cell. Specific use of this fix is to compute adsorption 
 isotherm in porous materials, or computing vapor-liquid equilibrium of fluids. 
 This fix is complementary to the :doc:`fix gcmc <fix_gcmc>` command, which performs
 grand canonical Monte Carlo (GCMC) by exchanging particles with an infinite
-chemical potential reservoir. MCEMC and GCMC are gives identical adsorption 
+chemical potential reservoir. MCEMC and GCMC give identical adsorption 
 isotherms for microporous materials. But for large pores (> 2 nm), GCMC gives 
-a Hysteretic adsorption/desorption isotherm, while MCEMC gives a reversible S-
-shaped Vander Waals type isotherm, as discussed in :ref:`(Parashar) <Parashar>`.
+a hysteretic adsorption/desorption isotherm, while MCEMC gives a reversible S-
+shaped van der Waals type isotherm, as discussed in :ref:`(Parashar) <Parashar>`.
 MCEMC isotherm spans the stable and metastable states, while GCMC samples only the
-stable states. The MCEMC is a middle ground between the grand canonical ensemble,
+stable states. The MCEMC is a middle ground between the grand canonical ensemble
 which permits unlimited fluctuations, and the canonical ensemble, which 
 considers a close system. The MCEMC simulations generate the adsorption 
 isotherms equivalent to the canonical ensemble isotherms with accuracy of one molecule.
 MCEMC is equivalent to GCMC when gauge cell volume is infinite and is equivalent to
-the canonical ensemble when gauge cell volume is zero.
+the canonical ensemble when gauge cell volume is zero. 
 
 Every N timesteps the fix attempts both MCEMC exchanges (insertions or
-deletions) and MC moves of gas atoms or molecules.  On those timesteps, the
+deletions) and MC moves of gas atoms or molecules. On those timesteps, the
 average number of attempted MCEMC exchanges is X, while the average number
 of attempted MC moves is M.  For MCEMC exchanges of either molecular or
 atomic gasses, these exchanges can be either deletions or insertions, with
@@ -136,7 +136,6 @@ deletion. If an attempted move places the atom or molecule
 center-of-mass outside the specified region, a new attempted move is
 generated. This process is repeated until the atom or molecule
 center-of-mass is inside the specified region.
-
 
 Note that neighbor lists are re-built every timestep that this fix is
 invoked, so you should not set N to be too small.  However, periodic
@@ -223,9 +222,9 @@ by the user.  In both cases, exchanged atoms/molecules are assigned to
 two groups: the default group "all" and the fix group
 (which can also be "all").
 
-During the MCEMC exchange move, the particles are exchagned between the system
+During the MCEMC exchange move, the particles are exchanged between the system
 and a finite ideal gas reservoir (gauge cell) such that the total number of particles
-in the combined system (system + gauge cell) remains constant and equal to ntotal.
+in the combined system (system + gauge cell) remains constant.
 
 .. math.:
     N_{total} = N_{system} + N_{gauge}
@@ -233,17 +232,17 @@ in the combined system (system + gauge cell) remains constant and equal to ntota
 where N_{total} is the total number of particles in the combined system,
 N_{system} is the number of particles in the simulation system, and
 N_{gauge} is the number of particles in the ideal gas reservoir (gauge cell). The
-gauge cell has a fixed volume (vgauge) and is maintained at the same temperature (T)
-as the simulation system. The combined system is in thermal and particle equilibrium, hence the
-chemical potential of the system is equal to that of the ideal gas reservoir. 
+gauge cell has a fixed volume (V_{gauge}) and is maintained at the same temperature (T)
+as the simulation system. The combined system is in thermal and chemical equilibrium, hence the
+chemical potential of the system is equal to that of the gauge cell. 
 The chemical potential of the gauge cell (and hence the system) is given by:
 
 .. math.:
-    \mu^{id} = k_{B}T ln(\frac{N_{gauge}\Lambda^{3}}{vgauge})
+    \mu^{id} = k_{B}T ln(\frac{N_{gauge}\Lambda^{3}}{V_{gauge}})
 
 where k_{B} is the Boltzmann constant, \Lambda is the thermal de Broglie wavelength
-of the ideal gas particles at temperature T, vgauge is the volume of gauge cell,
-and N_{gauge} is the number of average number of particles in the gauge cell. 
+of the ideal gas particles at temperature T, V_{gauge} is the volume of gauge cell,
+and N_{gauge} is the average number of particles in the gauge cell. 
 The constant :math:`\Lambda` is required for dimensional consistency. For all unit
 styles except *lj* it is defined as the thermal de Broglie wavelength.
 
@@ -255,9 +254,32 @@ where *h* is Planck's constant, and *m* is the mass of the exchanged atom
 or molecule.  For unit style *lj*, :math:`\Lambda` is simply set to
 unity.
 
-During an insertion move, a particle is randomly selected from the gauge cell 
-and inserted into the simulation system. During a deletion move, a particle is 
-randomly selected from the simulation system and moved to the gauge cell. 
+During an MCEMC insertion move, a particle is randomly selected from the gauge cell 
+and inserted into the simulation system. During an MCEMC deletion move, a particle is 
+randomly selected from the simulation system and moved to the gauge cell. The acceptance
+probability for particle addition to the system is given by
+
+.. math::
+
+   acc(N \rightarrow N+1) = \min\left(1, \frac{V N_{gauge}}{(N+1) V_{gauge}} \exp(-\beta[E(N+1)-E(N)])\right)
+
+The acceptance probability for particle deletion from system is given by
+
+.. math::
+
+   acc(N \rightarrow N-1) = \min\left(1, \frac{V_{gauge} N}{(N_{gauge}+1) V} \exp(-\beta[E(N)-E(N-1)])\right)
+
+In GCMC, the chemical potential of the infinite reservoir is imposed on the system 
+using the exchange move, while in MCEMC, the gauge cell (which is assumed to be an ideal gas)
+is used to measure the chemical potential of the system. In GCMC, the only input is
+the chemical potential of the infinite reservoir and one can obtain the number of particles in the system
+as the average number of particles observed in the system. In MCEMC, there are two inputs:
+Ntotal and vgauge. From these two inputs, the chemical potential (and hence fugacity) of the system
+is calculated based on ideal gas chemical potential in the gauge cell. Whereas, the number of 
+particles adsorbed is simply the average number of particles observed in the system. Note that
+the choice of Ntotal and vgauge is not arbitrary. The recommendation is to choose Vgauge such that
+the gauge cell should contain roughly 70-80 particles for good statistics. Having a GCMC simulated 
+isotherm a priori can help in determining Ntotal.
 
 The *full_energy* option means that the fix calculates the total
 potential energy of the entire simulated system, instead of just
@@ -428,7 +450,7 @@ to do parallel molecule exchange without translation and rotation moves
 by setting MC moves to zero and/or by using the *mcmoves* keyword with
 *Pmoltrans* = *Pmolrotate* = 0 .
 
-hen using fix mcemc in combination with fix shake or fix rigid, only
+When using fix mcemc in combination with fix shake or fix rigid, only
 MCEMC exchange moves are supported, so the argument *M* must be zero.
 
 When using fix mcemc in combination with fix rigid, deletion of the last
