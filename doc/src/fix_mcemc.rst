@@ -66,25 +66,25 @@ Examples
 Description
 """""""""""
 
-This fix performs mesocanonical Monte Carlo (MCEMC) also known as gauge cell 
+This fix performs mesocanonical Monte Carlo (MCEMC) also known as gauge cell
 simulation by exchanging particles with a finite volume ideal gas reservoir (gauge cell) at
 the same temperature as the system as discussed in :ref:`(Parashar) <Parashar>`.
 It also attempts Monte Carlo moves (translations and rotations) of particles
-within the simulation cell. Specific use of this fix is to compute adsorption 
-isotherm in porous materials, or computing vapor-liquid equilibrium of fluids. 
+within the simulation cell. Specific use of this fix is to compute adsorption
+isotherm in porous materials, or computing vapor-liquid equilibrium of fluids.
 This fix is complementary to the :doc:`fix gcmc <fix_gcmc>` command, which performs
 grand canonical Monte Carlo (GCMC) by exchanging particles with an infinite
-chemical potential reservoir. MCEMC and GCMC give identical adsorption 
-isotherms for microporous materials. But for large pores (> 2 nm), GCMC gives 
+chemical potential reservoir. MCEMC and GCMC give identical adsorption
+isotherms for microporous materials. But for large pores (> 2 nm), GCMC gives
 a hysteretic adsorption/desorption isotherm, while MCEMC gives a reversible S-
 shaped van der Waals type isotherm, as discussed in :ref:`(Parashar) <Parashar>`.
 MCEMC isotherm spans the stable and metastable states, while GCMC samples only the
 stable states. The MCEMC is a middle ground between the grand canonical ensemble
-which permits unlimited fluctuations, and the canonical ensemble, which 
-considers a close system. The MCEMC simulations generate the adsorption 
+which permits unlimited fluctuations, and the canonical ensemble, which
+considers a close system. The MCEMC simulations generate the adsorption
 isotherms equivalent to the canonical ensemble isotherms with accuracy of one molecule.
 MCEMC is equivalent to GCMC when gauge cell volume is infinite and is equivalent to
-the canonical ensemble when gauge cell volume is zero. 
+the canonical ensemble when gauge cell volume is zero.
 
 Every N timesteps the fix attempts both MCEMC exchanges (insertions or
 deletions) and MC moves of gas atoms or molecules. On those timesteps, the
@@ -234,7 +234,7 @@ N_{system} is the number of particles in the simulation system, and
 N_{gauge} is the number of particles in the ideal gas reservoir (gauge cell). The
 gauge cell has a fixed volume (V_{gauge}) and is maintained at the same temperature (T)
 as the simulation system. The combined system is in thermal and chemical equilibrium, hence the
-chemical potential of the system is equal to that of the gauge cell. 
+chemical potential of the system is equal to that of the gauge cell.
 The chemical potential of the gauge cell (and hence the system) is given by:
 
 .. math.:
@@ -242,7 +242,7 @@ The chemical potential of the gauge cell (and hence the system) is given by:
 
 where k_{B} is the Boltzmann constant, \Lambda is the thermal de Broglie wavelength
 of the ideal gas particles at temperature T, V_{gauge} is the volume of gauge cell,
-and N_{gauge} is the average number of particles in the gauge cell. 
+and N_{gauge} is the average number of particles in the gauge cell.
 The constant :math:`\Lambda` is required for dimensional consistency. For all unit
 styles except *lj* it is defined as the thermal de Broglie wavelength.
 
@@ -254,8 +254,8 @@ where *h* is Planck's constant, and *m* is the mass of the exchanged atom
 or molecule.  For unit style *lj*, :math:`\Lambda` is simply set to
 unity.
 
-During an MCEMC insertion move, a particle is randomly selected from the gauge cell 
-and inserted into the simulation system. During an MCEMC deletion move, a particle is 
+During an MCEMC insertion move, a particle is randomly selected from the gauge cell
+and inserted into the simulation system. During an MCEMC deletion move, a particle is
 randomly selected from the simulation system and moved to the gauge cell. The acceptance
 probability for particle addition to the system is given by
 
@@ -269,16 +269,16 @@ The acceptance probability for particle deletion from system is given by
 
    acc(N \rightarrow N-1) = \min\left(1, \frac{V_{gauge} N}{(N_{gauge}+1) V} \exp(-\beta[E(N)-E(N-1)])\right)
 
-In GCMC, the chemical potential of the infinite reservoir is imposed on the system 
+In GCMC, the chemical potential of the infinite reservoir is imposed on the system
 using the exchange move, while in MCEMC, the gauge cell (which is assumed to be an ideal gas)
 is used to measure the chemical potential of the system. In GCMC, the only input is
 the chemical potential of the infinite reservoir and one can obtain the number of particles in the system
 as the average number of particles observed in the system. In MCEMC, there are two inputs:
 Ntotal and vgauge. From these two inputs, the chemical potential (and hence fugacity) of the system
-is calculated based on ideal gas chemical potential in the gauge cell. Whereas, the number of 
+is calculated based on ideal gas chemical potential in the gauge cell. Whereas, the number of
 particles adsorbed is simply the average number of particles observed in the system. Note that
 the choice of Ntotal and vgauge is not arbitrary. The recommendation is to choose Vgauge such that
-the gauge cell should contain roughly 70-80 particles for good statistics. Having a GCMC simulated 
+the gauge cell should contain roughly 70-80 particles for good statistics. Having a GCMC simulated
 isotherm a priori can help in determining Ntotal.
 
 The *full_energy* option means that the fix calculates the total
@@ -496,14 +496,14 @@ listed above.
 
 .. _Parashar:
 
-**(Parashar)** Parashar, S., Neimark, A.V., Understanding the Origins of 
-Reversible and Hysteretic Pathways of Adsorption Phase Transitions in 
+**(Parashar)** Parashar, S., Neimark, A.V., Understanding the Origins of
+Reversible and Hysteretic Pathways of Adsorption Phase Transitions in
 Metal-Organic Frameworks, Journal of Colloid And Interface Science, 2024.
 DOI: 10.1016/j.jcis.2024.06.083
 
 
 .. _Neimark:
 
-**(Neimark)** Neimark, A.V., Vishnyakov, A., Gauge cell method for simulation 
-studies of phase transitions in confined systems, Physical Review E, 2000. 
+**(Neimark)** Neimark, A.V., Vishnyakov, A., Gauge cell method for simulation
+studies of phase transitions in confined systems, Physical Review E, 2000.
 DOI: 10.1103/PhysRevE.62.4611
