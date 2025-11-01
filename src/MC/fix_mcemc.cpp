@@ -69,8 +69,7 @@ static const char cite_fix_mcemc[] =
   "fix mcemc command: doi:10.1016/j.jcis.2024.06.083\n\n"
   "@Article{Parashar,\n"
   "author = {Parashar, S. and Neimark, A. V.},\n"
-  "title = {Understanding the Origins of Reversible and Hysteretic Pathways of\
-  Adsorption Phase Transitions in Metal-Organic Frameworks},\n"
+  "title = {Understanding the Origins of Reversible and Hysteretic Pathways of Adsorption Phase Transitions in Metal-Organic Frameworks},\n"
   "journal = {Journal of Colloid And Interface Science},\n"
   "year = {2024},\n"
   "doi = {10.1016/j.jcis.2024.06.083},\n"

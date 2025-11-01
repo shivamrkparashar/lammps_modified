@@ -54,6 +54,4 @@ compute_modify  thermo_temp dynamic/dof yes
 thermo_style    custom step atoms v_nsimulation v_ngauge temp press pe ke etotal   
 thermo          100                                                     
 
-# run
-
 run             10000

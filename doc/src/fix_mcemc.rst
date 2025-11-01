@@ -13,12 +13,12 @@ Syntax
 * ID, group-ID are documented in :doc:`fix <fix>` command
 * mcemc = style name of this fix command
 * N = invoke this fix every N steps
-* X = average number of GCMC exchanges to attempt every N steps
+* X = average number of MCEMC exchanges to attempt every N steps
 * M = average number of MC moves to attempt every N steps
 * type = atom type (1-Ntypes or type label) for inserted atoms (must be 0 if mol keyword used)
 * seed = random # seed (positive integer)
 * T = temperature of the ideal gas reservoir (temperature units)
-* vgauge = gauge volume for GCMC exchanges (volume units)
+* vgauge = gauge volume for MCEMC exchanges (volume units)
 * ntotal = total number of atoms in the system (positive integer)
 * displace = maximum Monte Carlo translation distance (length units)
 * zero or more keyword/value pairs may be appended to args
@@ -37,9 +37,9 @@ Syntax
        *shake* value = fix-ID
          fix-ID = ID of :doc:`fix shake <fix_shake>` command
        *region* value = region-ID
-         region-ID = ID of region where GCMC exchanges and MC moves are allowed
+         region-ID = ID of region where MCEMC exchanges and MC moves are allowed
        *maxangle* value = maximum molecular rotation angle (degrees)
-       *full_energy* = compute the entire system energy when performing GCMC exchanges and MC moves
+       *full_energy* = compute the entire system energy when performing MCEMC exchanges and MC moves
        *charge* value = charge of inserted atoms (charge units)
        *group* value = group-ID
          group-ID = group-ID for inserted atoms (string)
@@ -70,18 +70,18 @@ This fix performs mesocanonical Monte Carlo (MCEMC) also known as gauge cell
 simulation by exchanging particles with a finite volume ideal gas reservoir (gauge cell) at
 the same temperature as the system as discussed in :ref:`(Parashar) <Parashar>`.
 It also attempts Monte Carlo moves (translations and rotations) of particles
-within the simulation cell. Specific use of this fix is to compute adsorption
-isotherm in porous materials, or computing vapor-liquid equilibrium of fluids.
+within the simulation cell. Specific uses of this fix are to compute adsorption
+isotherm in porous materials, or to compute the vapor-liquid equilibrium of fluids.
 This fix is complementary to the :doc:`fix gcmc <fix_gcmc>` command, which performs
 grand canonical Monte Carlo (GCMC) by exchanging particles with an infinite
 chemical potential reservoir. MCEMC and GCMC give identical adsorption
 isotherms for microporous materials. But for large pores (> 2 nm), GCMC gives
 a hysteretic adsorption/desorption isotherm, while MCEMC gives a reversible S-
 shaped van der Waals type isotherm, as discussed in :ref:`(Parashar) <Parashar>`.
-MCEMC isotherm spans the stable and metastable states, while GCMC samples only the
-stable states. The MCEMC is a middle ground between the grand canonical ensemble
+The MCEMC isotherm spans the stable and metastable states, while GCMC samples only the
+stable states. The MCEMC method is a middle ground between the grand canonical ensemble
 which permits unlimited fluctuations, and the canonical ensemble, which
-considers a close system. The MCEMC simulations generate the adsorption
+considers a closed system. MCEMC simulations generate adsorption
 isotherms equivalent to the canonical ensemble isotherms with accuracy of one molecule.
 MCEMC is equivalent to GCMC when gauge cell volume is infinite and is equivalent to
 the canonical ensemble when gauge cell volume is zero.
@@ -226,7 +226,7 @@ During the MCEMC exchange move, the particles are exchanged between the system
 and a finite ideal gas reservoir (gauge cell) such that the total number of particles
 in the combined system (system + gauge cell) remains constant.
 
-.. math.:
+.. math::
     N_{total} = N_{system} + N_{gauge}
 
 where N_{total} is the total number of particles in the combined system,
@@ -237,7 +237,7 @@ as the simulation system. The combined system is in thermal and chemical equilib
 chemical potential of the system is equal to that of the gauge cell.
 The chemical potential of the gauge cell (and hence the system) is given by:
 
-.. math.:
+.. math::
     \mu^{id} = k_{B}T ln(\frac{N_{gauge}\Lambda^{3}}{V_{gauge}})
 
 where k_{B} is the Boltzmann constant, \Lambda is the thermal de Broglie wavelength
@@ -284,7 +284,7 @@ isotherm a priori can help in determining Ntotal.
 The *full_energy* option means that the fix calculates the total
 potential energy of the entire simulated system, instead of just
 the energy of the part that is changed. The total system
-energy before and after the proposed GCMC exchange or MC move
+energy before and after the proposed MCEMC exchange or MC move
 is then used in the
 Metropolis criterion to determine whether or not to accept the
 proposed change. By default, this option is off,
@@ -335,7 +335,7 @@ include: :doc:`efield <fix_efield>`, :doc:`gravity <fix_gravity>`,
 <fix_temp_berendsen>`, :doc:`temp/rescale <fix_temp_rescale>`, and
 :doc:`wall fixes <fix_wall>`.  For that energy to be included in the
 total potential energy of the system (the quantity used when performing
-GCMC exchange and MC moves), you MUST enable the :doc:`fix_modify
+MCEMC exchange and MC moves), you MUST enable the :doc:`fix_modify
 <fix_modify>` *energy* option for that fix.  The doc pages for
 individual :doc:`fix <fix>` commands specify if this should be done.
 
