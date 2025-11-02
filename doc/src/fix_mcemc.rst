@@ -62,9 +62,10 @@ Examples
    fix 3 water mcemc 10 100 100 0 3456543 3.0 1200 100 mol my_one_water maxangle 180 full_energy
    fix 4 my_gas mcemc 1 10 10 1 123456543 300.0 1200 100 1.0 region disk
 
-
 Description
 """""""""""
+
+.. versionadded:: TBD
 
 This fix performs mesocanonical Monte Carlo (MCEMC) also known as gauge cell
 simulation by exchanging particles with a finite volume ideal gas reservoir (gauge cell) at

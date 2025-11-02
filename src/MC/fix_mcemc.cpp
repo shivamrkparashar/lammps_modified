@@ -117,7 +117,6 @@ FixMCEMC::FixMCEMC(LAMMPS *lmp, int narg, char **arg) :
   ntotal = utils::numeric(FLERR, arg[10], false, lmp);
   displace = utils::numeric(FLERR, arg[11], false, lmp);
 
-
   if (nevery <= 0) error->all(FLERR, "Illegal fix mcemc command");
   if (nexchanges < 0) error->all(FLERR, "Illegal fix mcemc command");
   if (nmcmoves < 0) error->all(FLERR, "Illegal fix mcemc command");
