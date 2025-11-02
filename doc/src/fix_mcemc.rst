@@ -8,7 +8,7 @@ Syntax
 
 .. code-block:: LAMMPS
 
-   fix ID group-ID mcemc N X M type seed T vgauge ntotal displace keyword values ...
+   fix ID group-ID mcemc N X M type seed T Vgauge Ntotal displace keyword values ...
 
 * ID, group-ID are documented in :doc:`fix <fix>` command
 * mcemc = style name of this fix command
@@ -18,8 +18,8 @@ Syntax
 * type = atom type (1-Ntypes or type label) for inserted atoms (must be 0 if mol keyword used)
 * seed = random # seed (positive integer)
 * T = temperature of the ideal gas reservoir (temperature units)
-* vgauge = gauge volume for MCEMC exchanges (volume units)
-* ntotal = total number of atoms in the system (positive integer)
+* Vgauge = gauge volume for MCEMC exchanges (volume units)
+* Ntotal = total number of atoms in the system (positive integer)
 * displace = maximum Monte Carlo translation distance (length units)
 * zero or more keyword/value pairs may be appended to args
 
@@ -52,7 +52,6 @@ Syntax
        *max* value = Maximum number of atoms allowed in the fix group (and region)
        *min* value = Minimum number of atoms allowed in the fix group (and region)
 
-
 Examples
 """"""""
 
@@ -67,109 +66,111 @@ Description
 
 .. versionadded:: TBD
 
-This fix performs mesocanonical Monte Carlo (MCEMC) also known as gauge cell
-simulation by exchanging particles with a finite volume ideal gas reservoir (gauge cell) at
-the same temperature as the system as discussed in :ref:`(Parashar) <Parashar>`.
-It also attempts Monte Carlo moves (translations and rotations) of particles
-within the simulation cell. Specific uses of this fix are to compute adsorption
-isotherm in porous materials, or to compute the vapor-liquid equilibrium of fluids.
-This fix is complementary to the :doc:`fix gcmc <fix_gcmc>` command, which performs
-grand canonical Monte Carlo (GCMC) by exchanging particles with an infinite
-chemical potential reservoir. MCEMC and GCMC give identical adsorption
-isotherms for microporous materials. But for large pores (> 2 nm), GCMC gives
-a hysteretic adsorption/desorption isotherm, while MCEMC gives a reversible S-
-shaped van der Waals type isotherm, as discussed in :ref:`(Parashar) <Parashar>`.
-The MCEMC isotherm spans the stable and metastable states, while GCMC samples only the
-stable states. The MCEMC method is a middle ground between the grand canonical ensemble
-which permits unlimited fluctuations, and the canonical ensemble, which
-considers a closed system. MCEMC simulations generate adsorption
-isotherms equivalent to the canonical ensemble isotherms with accuracy of one molecule.
-MCEMC is equivalent to GCMC when gauge cell volume is infinite and is equivalent to
-the canonical ensemble when gauge cell volume is zero.
+This fix performs mesocanonical Monte Carlo (MCEMC) also known as gauge
+cell simulation by exchanging particles with a finite volume ideal gas
+reservoir (gauge cell) at the same temperature as the system as
+discussed in :ref:`(Parashar) <Parashar>`.  It also attempts Monte Carlo
+moves (translations and rotations) of particles within the simulation
+cell.  Specific uses of this fix are to compute adsorption isotherm in
+porous materials, or to compute the vapor-liquid equilibrium of fluids.
+This fix is complementary to the :doc:`fix gcmc <fix_gcmc>` command,
+which performs grand canonical Monte Carlo (GCMC) by exchanging
+particles with an infinite chemical potential reservoir.  MCEMC and GCMC
+give identical adsorption isotherms for microporous materials.  But for
+large pores (> 2 nm), GCMC gives a hysteretic adsorption/desorption
+isotherm, while MCEMC gives a reversible S- shaped van der Waals type
+isotherm, as discussed in :ref:`(Parashar) <Parashar>`.  The MCEMC
+isotherm spans the stable and meta-stable states, while GCMC samples
+only the stable states.  The MCEMC method is a middle ground between the
+grand canonical ensemble which permits unlimited fluctuations, and the
+canonical ensemble, which considers a closed system.  MCEMC simulations
+generate adsorption isotherms equivalent to the canonical ensemble
+isotherms with accuracy of one molecule.  MCEMC is equivalent to GCMC
+when gauge cell volume is infinite and is equivalent to the canonical
+ensemble when gauge cell volume is zero.
 
-Every N timesteps the fix attempts both MCEMC exchanges (insertions or
-deletions) and MC moves of gas atoms or molecules. On those timesteps, the
-average number of attempted MCEMC exchanges is X, while the average number
-of attempted MC moves is M.  For MCEMC exchanges of either molecular or
-atomic gasses, these exchanges can be either deletions or insertions, with
-equal probability.
+Every *N* timesteps the fix attempts both MCEMC exchanges (insertions or
+deletions) and MC moves of gas atoms or molecules.  On those timesteps,
+the average number of attempted MCEMC exchanges is *X*, while the average
+number of attempted MC moves is *M*.  For MCEMC exchanges of either
+molecular or atomic gasses, these exchanges can be either deletions or
+insertions, with equal probability.
 
-The possible choices for MC moves are translation of an atom, translation
-of a molecule, and rotation of a molecule.  The relative amounts of each are
-determined by the optional *mcmoves* keyword (see below).  The default
-behavior is as follows. If the *mol* keyword is used, only molecule
-translations and molecule rotations are performed with equal probability.
-Conversely, if the *mol* keyword is not used, only atom translations are
-performed.  M should typically be chosen to be approximately equal to the
-expected number of gas atoms or molecules of the given type within the
-simulation cell or region, which will result in roughly one MC move per
-atom or molecule per MC cycle.
+The possible choices for MC moves are translation of an atom,
+translation of a molecule, and rotation of a molecule.  The relative
+amounts of each are determined by the optional *mcmoves* keyword (see
+below).  The default behavior is as follows.  If the *mol* keyword is
+used, only molecule translations and molecule rotations are performed
+with equal probability.  Conversely, if the *mol* keyword is not used,
+only atom translations are performed.  *M* should typically be chosen to
+be approximately equal to the expected number of gas atoms or molecules
+of the given type within the simulation cell or region, which will
+result in roughly one MC move per atom or molecule per MC cycle.
 
 All inserted particles are always added to two groups: the default group
 "all" and the fix group specified in the fix command.  In addition,
 particles are also added to any groups specified by the *group* and
-*grouptype* keywords.  If inserted particles are individual atoms, they are
-assigned the atom type given by the type argument.  If they are molecules,
-the type argument has no effect and must be set to zero. Instead, the type
-of each atom in the inserted molecule is specified in the file read by the
-:doc:`molecule <molecule>` command.
+*grouptype* keywords.  If inserted particles are individual atoms, they
+are assigned the atom type given by the type argument.  If they are
+molecules, the type argument has no effect and must be set to zero.
+Instead, the type of each atom in the inserted molecule is specified in
+the file read by the :doc:`molecule <molecule>` command.
 
 .. note::
 
-   Care should be taken to apply fix mcemc only to
-   a group that contains only those atoms and molecules
-   that you wish to manipulate using Monte Carlo.
-   Hence it is generally not a good idea to specify
-   the default group "all" in the fix command, although it is allowed.
+   Care should be taken to apply *fix mcemc* to a group that contains
+   *only* those atoms and molecules that you wish to manipulate using
+   Monte Carlo.  Hence it is generally not a good idea to specify the
+   default group "all" in the fix command, although it is allowed.
 
 This command may optionally use the *region* keyword to define an
 exchange and move volume.  The specified region must have been
 previously defined with a :doc:`region <region>` command.  It must be
 defined with side = *in*\ .  Insertion attempts occur only within the
-specified region. For non-rectangular regions, random trial points are
+specified region.  For non-rectangular regions, random trial points are
 generated within the rectangular bounding box until a point is found
-that lies inside the region. If no valid point is generated after 1000
+that lies inside the region.  If no valid point is generated after 1000
 trials, no insertion is performed, but it is counted as an attempted
 insertion.  Move and deletion attempt candidates are selected from gas
-atoms or molecules within the region. If there are no candidates, no
+atoms or molecules within the region.  If there are no candidates, no
 move or deletion is performed, but it is counted as an attempt move or
-deletion. If an attempted move places the atom or molecule
+deletion.  If an attempted move places the atom or molecule
 center-of-mass outside the specified region, a new attempted move is
-generated. This process is repeated until the atom or molecule
+generated.  This process is repeated until the atom or molecule
 center-of-mass is inside the specified region.
 
 Note that neighbor lists are re-built every timestep that this fix is
-invoked, so you should not set N to be too small.  However, periodic
+invoked, so you should not set *N* to be too small.  However, periodic
 rebuilds are necessary in order to avoid dangerous rebuilds and missed
-interactions. Specifically, avoid performing so many MC translations
-per timestep that atoms can move beyond the neighbor list skin
-distance. See the :doc:`neighbor <neighbor>` command for details.
+interactions.  Specifically, avoid performing so many MC translations
+per timestep that atoms can move beyond the neighbor list skin distance.
+See the :doc:`neighbor <neighbor>` command for details.
 
 When an atom or molecule is to be inserted, its coordinates are chosen
 at a random position within the current simulation cell or region, and
 new atom velocities are randomly chosen from the specified temperature
-distribution given by T. The effective temperature for new atom
+distribution given by *T*.  The effective temperature for new atom
 velocities can be increased or decreased using the optional keyword
-*tfac_insert* (see below). Relative coordinates for atoms in a
-molecule are taken from the template molecule provided by the
-user. The center of mass of the molecule is placed at the insertion
-point. The orientation of the molecule is chosen at random by rotating
-about this point.
+*tfac_insert* (see below).  Relative coordinates for atoms in a molecule
+are taken from the template molecule provided by the user.  The center
+of mass of the molecule is placed at the insertion point.  The
+orientation of the molecule is chosen at random by rotating about this
+point.
 
 Individual atoms are inserted, unless the *mol* keyword is used.  It
-specifies a *template-ID* previously defined using the
-:doc:`molecule <molecule>` command, which reads a file that defines the
-molecule.  The coordinates, atom types, charges, etc., as well as any
-bonding and special neighbor information for the molecule can
-be specified in the molecule file.  See the :doc:`molecule <molecule>`
-command for details.  The only settings required to be in this file
-are the coordinates and types of atoms in the molecule.
+specifies a *template-ID* previously defined using the :doc:`molecule
+<molecule>` command, which reads a file that defines the molecule.  The
+coordinates, atom types, charges, etc., as well as any bonding and
+special neighbor information for the molecule can be specified in the
+molecule file.  See the :doc:`molecule <molecule>` command for details.
+The only settings required to be in this file are the coordinates and
+types of atoms in the molecule.
 
 When not using the *mol* keyword, you should ensure you do not delete
 atoms that are bonded to other atoms, or LAMMPS will soon generate an
 error when it tries to find bonded neighbors.  LAMMPS will warn you if
-any of the atoms eligible for deletion have a non-zero molecule ID,
-but does not check for this at the time of deletion.
+any of the atoms eligible for deletion have a non-zero molecule ID, but
+does not check for this at the time of deletion.
 
 If you wish to insert molecules using the *mol* keyword that will be
 treated as rigid bodies, use the *rigid* keyword, specifying as its
@@ -190,26 +191,26 @@ their bonds or angles constrained via SHAKE, use the *shake* keyword,
 specifying as its value the ID of a separate :doc:`fix shake
 <fix_shake>` command which also appears in your input script.
 
-Optionally, users may specify the relative amounts of different MC
-moves using the *mcmoves* keyword. The values *Patomtrans*,
-*Pmoltrans*, *Pmolrotate* specify the average proportion of
-atom translations, molecule translations, and molecule rotations,
-respectively. The values must be non-negative integers or real
-numbers, with at least one non-zero value. For example, (10,30,0)
-would result in 25% of the MC moves being atomic translations, 75%
-molecular translations, and no molecular rotations.
+Optionally, users may specify the relative amounts of different MC moves
+using the *mcmoves* keyword. The values *Patomtrans*, *Pmoltrans*,
+*Pmolrotate* specify the average proportion of atom translations,
+molecule translations, and molecule rotations, respectively. The values
+must be non-negative integers or real numbers, with at least one
+non-zero value. For example, (10,30,0) would result in 25% of the MC
+moves being atomic translations, 75% molecular translations, and no
+molecular rotations.
 
 Optionally, users may specify the maximum rotation angle for molecular
 rotations using the *maxangle* keyword and specifying the angle in
 degrees. Rotations are performed by generating a random point on the
-unit sphere and a random rotation angle on the range
-[0,maxangle). The molecule is then rotated by that angle about an
-axis passing through the molecule center of mass. The axis is parallel
-to the unit vector defined by the point on the unit sphere.  The same
-procedure is used for randomly rotating molecules when they are
-inserted, except that the maximum angle is 360 degrees.
+unit sphere and a random rotation angle on the range [0,maxangle).  The
+molecule is then rotated by that angle about an axis passing through the
+molecule center of mass. The axis is parallel to the unit vector defined
+by the point on the unit sphere.  The same procedure is used for
+randomly rotating molecules when they are inserted, except that the
+maximum angle is 360 degrees.
 
-Note that fix mcemc does not use configurational bias MC or any other
+Note that *fix mcemc* does not use configurational bias MC or any other
 kind of sampling of intramolecular degrees of freedom.  Inserted
 molecules can have different orientations, but they will all have the
 same intramolecular configuration, which was specified in the molecule
@@ -217,81 +218,90 @@ command input.
 
 For atomic gasses, inserted atoms have the specified atom type, but
 deleted atoms are any atoms that have been inserted or that already
-belong to the fix group. For molecular gasses, exchanged
-molecules use the same atom types as in the template molecule supplied
-by the user.  In both cases, exchanged atoms/molecules are assigned to
-two groups: the default group "all" and the fix group
-(which can also be "all").
+belong to the fix group.  For molecular gasses, exchanged molecules use
+the same atom types as in the template molecule supplied by the user.
+In both cases, exchanged atoms/molecules are assigned to two groups: the
+default group "all" and the fix group (which can also be "all").
 
-During the MCEMC exchange move, the particles are exchanged between the system
-and a finite ideal gas reservoir (gauge cell) such that the total number of particles
-in the combined system (system + gauge cell) remains constant.
+During the MCEMC exchange move, the particles are exchanged between the
+system and a finite ideal gas reservoir (gauge cell) such that the total
+number of particles in the combined system (system + gauge cell) remains
+constant.
 
 .. math::
-    N_{total} = N_{system} + N_{gauge}
 
-where N_{total} is the total number of particles in the combined system,
-N_{system} is the number of particles in the simulation system, and
-N_{gauge} is the number of particles in the ideal gas reservoir (gauge cell). The
-gauge cell has a fixed volume (V_{gauge}) and is maintained at the same temperature (T)
-as the simulation system. The combined system is in thermal and chemical equilibrium, hence the
-chemical potential of the system is equal to that of the gauge cell.
-The chemical potential of the gauge cell (and hence the system) is given by:
+   N_{total} = N_{system} + N_{gauge}
+
+where :math:`N_{total}` is the total number of particles in the combined
+system, :math:`N_{system}` is the number of particles in the simulation
+system, and :math:`N_{gauge}` is the number of particles in the ideal
+gas reservoir (gauge cell). The gauge cell has a fixed volume
+(:math:`V_{gauge}`) and is maintained at the same temperature (*T*) as the
+simulation system. The combined system is in thermal and chemical
+equilibrium, hence the chemical potential of the system is equal to that
+of the gauge cell.  The chemical potential of the gauge cell (and hence
+the system) is given by:
 
 .. math::
     \mu^{id} = k_{B}T ln(\frac{N_{gauge}\Lambda^{3}}{V_{gauge}})
 
-where k_{B} is the Boltzmann constant, \Lambda is the thermal de Broglie wavelength
-of the ideal gas particles at temperature T, V_{gauge} is the volume of gauge cell,
-and N_{gauge} is the average number of particles in the gauge cell.
-The constant :math:`\Lambda` is required for dimensional consistency. For all unit
-styles except *lj* it is defined as the thermal de Broglie wavelength.
+where :math:`k_{B}` is the Boltzmann constant, :math:`\Lambda` is the
+thermal de Broglie wavelength of the ideal gas particles at temperature
+*T*, :math:`V_{gauge}` is the volume of gauge cell, and
+:math:`N_{gauge}` is the average number of particles in the gauge cell.
+The constant :math:`\Lambda` is required for dimensional consistency.
+For all unit styles except *lj* it is defined as the thermal de Broglie
+wavelength.
 
 .. math::
 
    \Lambda = \sqrt{ \frac{h^2}{2 \pi m k_B T}}
 
-where *h* is Planck's constant, and *m* is the mass of the exchanged atom
-or molecule.  For unit style *lj*, :math:`\Lambda` is simply set to
+where *h* is Planck's constant, and *m* is the mass of the exchanged
+atom or molecule.  For unit style *lj*, :math:`\Lambda` is simply set to
 unity.
 
-During an MCEMC insertion move, a particle is randomly selected from the gauge cell
-and inserted into the simulation system. During an MCEMC deletion move, a particle is
-randomly selected from the simulation system and moved to the gauge cell. The acceptance
-probability for particle addition to the system is given by
+During an MCEMC insertion move, a particle is randomly selected from the
+gauge cell and inserted into the simulation system. During an MCEMC
+deletion move, a particle is randomly selected from the simulation
+system and moved to the gauge cell. The acceptance probability for
+particle addition to the system is given by
 
 .. math::
 
    acc(N \rightarrow N+1) = \min\left(1, \frac{V N_{gauge}}{(N+1) V_{gauge}} \exp(-\beta[E(N+1)-E(N)])\right)
 
-The acceptance probability for particle deletion from system is given by
+The acceptance probability for particle deletion from system is given by:
 
 .. math::
 
    acc(N \rightarrow N-1) = \min\left(1, \frac{V_{gauge} N}{(N_{gauge}+1) V} \exp(-\beta[E(N)-E(N-1)])\right)
 
-In GCMC, the chemical potential of the infinite reservoir is imposed on the system
-using the exchange move, while in MCEMC, the gauge cell (which is assumed to be an ideal gas)
-is used to measure the chemical potential of the system. In GCMC, the only input is
-the chemical potential of the infinite reservoir and one can obtain the number of particles in the system
-as the average number of particles observed in the system. In MCEMC, there are two inputs:
-Ntotal and vgauge. From these two inputs, the chemical potential (and hence fugacity) of the system
-is calculated based on ideal gas chemical potential in the gauge cell. Whereas, the number of
-particles adsorbed is simply the average number of particles observed in the system. Note that
-the choice of Ntotal and vgauge is not arbitrary. The recommendation is to choose Vgauge such that
-the gauge cell should contain roughly 70-80 particles for good statistics. Having a GCMC simulated
-isotherm a priori can help in determining Ntotal.
+In GCMC, the chemical potential of the infinite reservoir is imposed on
+the system using the exchange move, while in MCEMC, the gauge cell
+(which is assumed to be an ideal gas) is used to measure the chemical
+potential of the system. In GCMC, the only input is the chemical
+potential of the infinite reservoir and one can obtain the number of
+particles in the system as the average number of particles observed in
+the system. In MCEMC, there are two inputs: :math:`N_{total}` and
+:math:`V_{gauge}`.  From these two inputs, the chemical potential (and
+hence fugacity) of the system is calculated based on ideal gas chemical
+potential in the gauge cell.  Whereas, the number of particles adsorbed
+is simply the average number of particles observed in the system. Note
+that the choice of :math:`N_{total}` and :math:`V_{gauge}` is not
+arbitrary.  The recommendation is to choose :math:`V_{gauge}` such that
+the gauge cell should contain roughly 70-80 particles for good
+statistics.  Having a GCMC simulated isotherm a priori can help in
+determining :math:`N_{total}`.
 
 The *full_energy* option means that the fix calculates the total
-potential energy of the entire simulated system, instead of just
-the energy of the part that is changed. The total system
-energy before and after the proposed MCEMC exchange or MC move
-is then used in the
-Metropolis criterion to determine whether or not to accept the
-proposed change. By default, this option is off,
-in which case only
-partial energies are computed to determine the energy difference
-due to the proposed change.
+potential energy of the entire simulated system, instead of just the
+energy of the part that is changed.  The total system energy before and
+after the proposed MCEMC exchange or MC move is then used in the
+Metropolis criterion to determine whether or not to accept the proposed
+change.  By default, this option is off, in which case only partial
+energies are computed to determine the energy difference due to the
+proposed change.
 
 The *full_energy* option is needed for systems with complicated
 potential energy calculations, including the following:
@@ -308,23 +318,23 @@ keyword and issue a warning message.
 
 When the *mol* keyword is used, the *full_energy* option also includes
 the intramolecular energy of inserted and deleted molecules, whereas
-this energy is not included when *full_energy* is not used. If this
-is not desired, the *intra_energy* keyword can be used to define an
-amount of energy that is subtracted from the final energy when a
-molecule is inserted, and subtracted from the initial energy when a molecule
-is deleted. For molecules that have a non-zero intramolecular energy,
-this will ensure roughly the same behavior whether or not the
-*full_energy* option is used.
+this energy is not included when *full_energy* is not used.  If this is
+not desired, the *intra_energy* keyword can be used to define an amount
+of energy that is subtracted from the final energy when a molecule is
+inserted, and subtracted from the initial energy when a molecule is
+deleted.  For molecules that have a non-zero intramolecular energy, this
+will ensure roughly the same behavior whether or not the *full_energy*
+option is used.
 
-Inserted atoms and molecules are assigned random velocities based on
-the specified temperature :math:`T`. Because the relative velocity of all
-atoms in the molecule is zero, this may result in inserted molecules
-that are systematically too cold. In addition, the intramolecular
-potential energy of the inserted molecule may cause the kinetic energy
-of the molecule to quickly increase or decrease after insertion.  The
+Inserted atoms and molecules are assigned random velocities based on the
+specified temperature *T*.  Because the relative velocity of all atoms
+in the molecule is zero, this may result in inserted molecules that are
+systematically too cold.  In addition, the intramolecular potential
+energy of the inserted molecule may cause the kinetic energy of the
+molecule to quickly increase or decrease after insertion.  The
 *tfac_insert* keyword allows the user to counteract these effects by
-changing the temperature used to assign velocities to inserted atoms
-and molecules by a constant factor. For a particular application, some
+changing the temperature used to assign velocities to inserted atoms and
+molecules by a constant factor.  For a particular application, some
 experimentation may be required to find a value of *tfac_insert* that
 results in inserted molecules that equilibrate quickly to the correct
 temperature.
@@ -442,7 +452,7 @@ type masses.
 Do not set "neigh_modify once yes" or else this fix will never be
 called.  Reneighboring is **required**.
 
-Only usable for 3D simulations.
+This fix style is only usable for 3D simulations.
 
 This fix can be run in parallel, but aspects of the MCEMC part will not
 scale well in parallel.  Currently, molecule translations and rotations
@@ -451,26 +461,27 @@ to do parallel molecule exchange without translation and rotation moves
 by setting MC moves to zero and/or by using the *mcmoves* keyword with
 *Pmoltrans* = *Pmolrotate* = 0 .
 
-When using fix mcemc in combination with fix shake or fix rigid, only
-MCEMC exchange moves are supported, so the argument *M* must be zero.
+When using *fix mcemc* in combination with :doc:`fix shake <fix_shake>`
+or :doc:`fix rigid <fix_rigid>`, only MCEMC exchange moves are
+supported, so the argument *M* must be zero.
 
-When using fix mcemc in combination with fix rigid, deletion of the last
-remaining molecule is not allowed for technical reasons, and so the
-molecule count will never drop below 1, regardless of the specified
-chemical potential.
+When using *fix mcemc* in combination with :doc:`fix rigid <fix_rigid>`,
+deletion of the last remaining molecule is not allowed for technical
+reasons, and so the molecule count will never drop below 1, regardless
+of the specified chemical potential.
 
 Note that very lengthy simulations involving insertions/deletions of
 billions of gas molecules may run out of atom or molecule IDs and
 trigger an error, so it is better to run multiple shorter-duration
-simulations. Likewise, very large molecules have not been tested and
+simulations.  Likewise, very large molecules have not been tested and
 may turn out to be problematic.
 
-Use of multiple fix mcemc commands in the same input script can be
-problematic if using a template molecule. The issue is that the
-user-referenced template molecule in the second fix mcemc command may
-no longer exist since it might have been deleted by the first fix mcemc
-command. An existing template molecule will need to be referenced by
-the user for each subsequent fix mcemc command.
+Use of multiple *fix mcemc* commands in the same input script can be
+problematic if using a template molecule.  The issue is that the
+user-referenced template molecule in the second *fix mcemc* command may
+no longer exist since it might have been deleted by the first *fix
+mcemc* command.  An existing template molecule will need to be referenced
+by the user for each subsequent *fix mcemc* command.
 
 Related commands
 """"""""""""""""
@@ -481,9 +492,8 @@ Related commands
 :doc:`fix deposit <fix_deposit>`, :doc:`fix evaporate <fix_evaporate>`,
 :doc:`delete_atoms <delete_atoms>`
 
-
-Default
-"""""""
+Defaults
+""""""""
 
 The option defaults are mol = no, maxangle = 10, overlap_cutoff = 0.0,
 intra_energy = 0.0, tfac_insert = 1.0.
@@ -492,19 +502,12 @@ intra_energy = 0.0, tfac_insert = 1.0.
 except for the situations where full_energy is required, as
 listed above.
 
-
 ----------
 
 .. _Parashar:
 
-**(Parashar)** Parashar, S., Neimark, A.V., Understanding the Origins of
-Reversible and Hysteretic Pathways of Adsorption Phase Transitions in
-Metal-Organic Frameworks, Journal of Colloid And Interface Science, 2024.
-DOI: 10.1016/j.jcis.2024.06.083
-
+**(Parashar)** Parashar, S., Neimark, A.V., Journal of Colloid And Interface Science, 2024. DOI: 10.1016/j.jcis.2024.06.083
 
 .. _Neimark:
 
-**(Neimark)** Neimark, A.V., Vishnyakov, A., Gauge cell method for simulation
-studies of phase transitions in confined systems, Physical Review E, 2000.
-DOI: 10.1103/PhysRevE.62.4611
+**(Neimark)** Neimark, A.V., Vishnyakov, A., Physical Review E, 2000. DOI: 10.1103/PhysRevE.62.4611
