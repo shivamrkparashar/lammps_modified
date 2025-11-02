@@ -697,17 +697,9 @@ void FixMCEMC::init()
       error->all(FLERR,"Cannot do MCEMC on atoms in atom_modify first group");
   }
 
-  // compute beta, lambda, sigma, and the zz factor
+  // compute beta, sigma
   // For LJ units, lambda=1
   beta = 1.0/(force->boltz*reservoir_temperature);
-  if (strcmp(update->unit_style,"lj") == 0)
-    zz = exp(beta*chemical_potential);
-  else {
-    double lambda = sqrt(force->hplanck*force->hplanck/
-                         (2.0*MY_PI*gas_mass*force->mvv2e*
-                        force->boltz*reservoir_temperature));
-    zz = exp(beta*chemical_potential)/(pow(lambda,3.0));
-  }
 
   sigma = sqrt(force->boltz*reservoir_temperature*tfac_insert/gas_mass/force->mvv2e);
 
