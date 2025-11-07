@@ -71,10 +71,10 @@ cell simulation by exchanging particles with a finite volume ideal gas
 reservoir (gauge cell) at the same temperature as the system as
 discussed in :ref:`(Parashar) <Parashar>`.  It also attempts Monte Carlo
 moves (translations and rotations) of particles within the simulation
-cell.  Specific uses of this fix are to compute adsorption isotherm in
-porous materials, or to compute the vapor-liquid equilibrium of fluids.
-This fix is complementary to the :doc:`fix gcmc <fix_gcmc>` command,
-which performs grand canonical Monte Carlo (GCMC) by exchanging
+cell.  Specific uses of this fix are to compute the adsorption isotherm
+in porous materials or to compute the vapor-liquid equilibrium of
+fluids.  This fix is complementary to the :doc:`fix gcmc <fix_gcmc>`
+command, which performs grand canonical Monte Carlo (GCMC) by exchanging
 particles with an infinite chemical potential reservoir.  MCEMC and GCMC
 give identical adsorption isotherms for microporous materials.  But for
 large pores (> 2 nm), GCMC gives a hysteretic adsorption/desorption
@@ -85,9 +85,9 @@ only the stable states.  The MCEMC method is a middle ground between the
 grand canonical ensemble which permits unlimited fluctuations, and the
 canonical ensemble, which considers a closed system.  MCEMC simulations
 generate adsorption isotherms equivalent to the canonical ensemble
-isotherms with accuracy of one molecule.  MCEMC is equivalent to GCMC
-when gauge cell volume is infinite and is equivalent to the canonical
-ensemble when gauge cell volume is zero.
+isotherms with an accuracy of one molecule.  MCEMC is equivalent to GCMC
+when the gauge cell volume is infinite and is equivalent to the
+canonical ensemble when gauge cell volume is zero.
 
 Every *N* timesteps the fix attempts both MCEMC exchanges (insertions or
 deletions) and MC moves of gas atoms or molecules.  On those timesteps,
@@ -236,8 +236,8 @@ where :math:`N_{total}` is the total number of particles in the combined
 system, :math:`N_{system}` is the number of particles in the simulation
 system, and :math:`N_{gauge}` is the number of particles in the ideal
 gas reservoir (gauge cell). The gauge cell has a fixed volume
-(:math:`V_{gauge}`) and is maintained at the same temperature (*T*) as the
-simulation system. The combined system is in thermal and chemical
+(:math:`V_{gauge}`) and is maintained at the same temperature (*T*) as
+the simulation system. The combined system is in thermal and chemical
 equilibrium, hence the chemical potential of the system is equal to that
 of the gauge cell.  The chemical potential of the gauge cell (and hence
 the system) is given by:
@@ -473,8 +473,9 @@ of the specified chemical potential.
 Note that very lengthy simulations involving insertions/deletions of
 billions of gas molecules may run out of atom or molecule IDs and
 trigger an error, so it is better to run multiple shorter-duration
-simulations.  Likewise, very large molecules have not been tested and
-may turn out to be problematic.
+simulations.  The :doc:`reset_atoms <reset_atoms>` command can be used
+to "compress" the atom and molecuole IDs between runs.  Likewise, very
+large molecules have not been tested and may turn out to be problematic.
 
 Use of multiple *fix mcemc* commands in the same input script can be
 problematic if using a template molecule.  The issue is that the
