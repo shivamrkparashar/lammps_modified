@@ -17,11 +17,12 @@
 ------------------------------------------------------------------------- */
 
 #include "fix_mcemc.h"
-#include "citeme.h"
+
 #include "angle.h"
 #include "atom.h"
 #include "atom_vec.h"
 #include "bond.h"
+#include "citeme.h"
 #include "comm.h"
 #include "compute.h"
 #include "dihedral.h"
@@ -69,7 +70,8 @@ static const char cite_fix_mcemc[] =
   "fix mcemc command: doi:10.1016/j.jcis.2024.06.083\n\n"
   "@Article{Parashar,\n"
   "author = {Parashar, S. and Neimark, A. V.},\n"
-  "title = {Understanding the Origins of Reversible and Hysteretic Pathways of Adsorption Phase Transitions in Metal-Organic Frameworks},\n"
+  "title = {Understanding the Origins of Reversible and Hysteretic Pathways \n"
+  "         of Adsorption Phase Transitions in Metal-Organic Frameworks},\n"
   "journal = {Journal of Colloid And Interface Science},\n"
   "year = {2024},\n"
   "doi = {10.1016/j.jcis.2024.06.083},\n"
@@ -90,7 +92,7 @@ FixMCEMC::FixMCEMC(LAMMPS *lmp, int narg, char **arg) :
   if (lmp->citeme) lmp->citeme->add(cite_fix_mcemc);
 
   if (atom->molecular == Atom::TEMPLATE)
-    error->all(FLERR,"Fix mcemc does not (yet) work with atom_style template");
+    error->all(FLERR, Error::NOPOINTER, "Fix mcemc does not (yet) work with atom_style template");
 
   dynamic_group_allow = 1;
 
@@ -114,40 +116,41 @@ FixMCEMC::FixMCEMC(LAMMPS *lmp, int narg, char **arg) :
   seed = utils::inumeric(FLERR, arg[7], false, lmp);
   reservoir_temperature = utils::numeric(FLERR, arg[8], false, lmp);
   gaugecell_volume = utils::numeric(FLERR, arg[9], false, lmp);
-  ntotal = utils::numeric(FLERR, arg[10], false, lmp);
+  ntotal = (double) utils::inumeric(FLERR, arg[10], false, lmp);
   displace = utils::numeric(FLERR, arg[11], false, lmp);
 
-  if (nevery <= 0) error->all(FLERR, "Illegal fix mcemc command");
-  if (nexchanges < 0) error->all(FLERR, "Illegal fix mcemc command");
-  if (nmcmoves < 0) error->all(FLERR, "Illegal fix mcemc command");
-  if (seed <= 0) error->all(FLERR, "Illegal fix mcemc command");
+  if (nevery <= 0) error->all(FLERR, 3, "Fix mcemc nevery value must be > 0");
+  if (nexchanges < 0) error->all(FLERR, 4, "Fix mcemc nexchanges value must be >= 0");
+  if (nmcmoves < 0) error->all(FLERR, 5, "Fix mcemc nmcmoves value must be >= 0");
+  if (seed <= 0) error->all(FLERR, 7, "Fix mcemc random seed must be > 0");
   if (reservoir_temperature < 0.0)
-    error->all(FLERR, "Illegal fix mcemc command");
-  if (gaugecell_volume < 0.0) error->all(FLERR, "gaugecell_volume must be positive in fix mcemc command");
-  if (ntotal < 0)
-    error->all(FLERR, "ntotal must be positive in fix mcemc command");
-  if (displace < 0.0) error->all(FLERR, "Illegal fix mcemc command");
+    error->all(FLERR, 8, "Fix mcemc gas reservoir temperature must be >= 0");
+  if (gaugecell_volume < 0.0) error->all(FLERR, 9, "Fix mcemc gauge volume must be >= 0");
+  if (ntotal < 0.0) error->all(FLERR, 10, "Fix mcemc ntotal value must be >= 0");
+  if (displace < 0.0)
+    error->all(FLERR, 11, "Fix mcemc translation displacement distance must be >= 0");
 
   // read options from end of input line
 
-  options(narg-12,&arg[12]);
+  options(narg - 12, &arg[12]);
 
   // random number generator, same for all procs
 
-  random_equal = new RanPark(lmp,seed);
+  random_equal = new RanPark(lmp, seed);
 
   // random number generator, not the same for all procs
 
-  random_unequal = new RanPark(lmp,seed);
+  random_unequal = new RanPark(lmp, seed);
 
   // error checks on region and its extent being inside simulation box
 
   region_xlo = region_xhi = region_ylo = region_yhi = region_zlo = region_zhi = 0.0;
   if (region) {
     if (region->bboxflag == 0)
-      error->all(FLERR,"Fix mcemc region does not support a bounding box");
+      error->all(FLERR, Error::NOPOINTER, "Fix mcemc region {} does not support a bounding box",
+                 idregion);
     if (region->dynamic_check())
-      error->all(FLERR,"Fix mcemc region cannot be dynamic");
+      error->all(FLERR, Error::NOPOINTER, "Fix mcemc region {} cannot be dynamic", idregion);
 
     region_xlo = region->extent_xlo;
     region_xhi = region->extent_xhi;
@@ -247,8 +250,6 @@ FixMCEMC::FixMCEMC(LAMMPS *lmp, int narg, char **arg) :
 
 void FixMCEMC::options(int narg, char **arg)
 {
-  if (narg < 0) error->all(FLERR,"Illegal fix mcemc command");
-
   // defaults
 
   exchmode = EXCHATOM;
@@ -257,7 +258,7 @@ void FixMCEMC::options(int narg, char **arg)
   pmoltrans = 0.0;
   pmolrotate = 0.0;
   pmctot = 0.0;
-  max_rotation_angle = 10*MY_PI/180;
+  max_rotation_angle = 10 * MY_PI / 180;
   region_volume = 0;
   max_region_attempts = 1000;
   molecule_group = 0;
@@ -287,110 +288,108 @@ void FixMCEMC::options(int narg, char **arg)
 
   int iarg = 0;
   while (iarg < narg) {
-  if (strcmp(arg[iarg],"mol") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal fix mcemc command");
-      imol = atom->find_molecule(arg[iarg+1]);
+    if (strcmp(arg[iarg], "mol") == 0) {
+      if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix mcemc", error);
+      imol = atom->find_molecule(arg[iarg + 1]);
       if (imol == -1)
-        error->all(FLERR,"Molecule template ID for fix mcemc does not exist");
+        error->all(FLERR, iarg + 1, "Molecule template ID {} for fix mcemc does not exist",
+                   arg[iarg + 1]);
       if (atom->molecules[imol]->nset > 1 && comm->me == 0)
-        error->warning(FLERR,"Molecule template for "
-                       "fix mcemc has multiple molecules");
+        error->warning(FLERR, "Molecule template for fix mcemc has multiple molecules");
       exchmode = EXCHMOL;
       onemols = atom->molecules;
       nmol = onemols[imol]->nset;
       iarg += 2;
-  } else if (strcmp(arg[iarg],"mcmoves") == 0) {
-      if (iarg+4 > narg) error->all(FLERR,"Illegal fix mcemc command");
-      patomtrans = utils::numeric(FLERR,arg[iarg+1],false,lmp);
-      pmoltrans = utils::numeric(FLERR,arg[iarg+2],false,lmp);
-      pmolrotate = utils::numeric(FLERR,arg[iarg+3],false,lmp);
+    } else if (strcmp(arg[iarg], "mcmoves") == 0) {
+      if (iarg + 4 > narg) utils::missing_cmd_args(FLERR, "fix mcemc mcmoves", error);
+      patomtrans = utils::numeric(FLERR, arg[iarg + 1], false, lmp);
+      pmoltrans = utils::numeric(FLERR, arg[iarg + 2], false, lmp);
+      pmolrotate = utils::numeric(FLERR, arg[iarg + 3], false, lmp);
       if (patomtrans < 0 || pmoltrans < 0 || pmolrotate < 0)
-        error->all(FLERR,"Illegal fix mcemc command");
+        error->all(FLERR, "Illegal fix mcemc mcmoves parameters");
       pmctot = patomtrans + pmoltrans + pmolrotate;
-      if (pmctot <= 0)
-        error->all(FLERR,"Illegal fix mcemc command");
+      if (pmctot <= 0) error->all(FLERR, "Illegal fix mcemc mcmoves parameters");
       iarg += 4;
-    } else if (strcmp(arg[iarg],"region") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal fix mcemc command");
-      region = domain->get_region_by_id(arg[iarg+1]);
-      if (!region) error->all(FLERR,"Region {} for fix mcemc does not exist",arg[iarg+1]);
-      idregion = utils::strdup(arg[iarg+1]);
+    } else if (strcmp(arg[iarg], "region") == 0) {
+      if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix mcemc region", error);
+      region = domain->get_region_by_id(arg[iarg + 1]);
+      if (!region)
+        error->all(FLERR, iarg + 1, "Region {} for fix mcemc does not exist", arg[iarg + 1]);
+      idregion = utils::strdup(arg[iarg + 1]);
       iarg += 2;
-    } else if (strcmp(arg[iarg],"maxangle") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal fix mcemc command");
-      max_rotation_angle = utils::numeric(FLERR,arg[iarg+1],false,lmp);
-      max_rotation_angle *= MY_PI/180;
+    } else if (strcmp(arg[iarg], "maxangle") == 0) {
+      if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix mcemc maxangle", error);
+      max_rotation_angle = utils::numeric(FLERR, arg[iarg + 1], false, lmp);
+      max_rotation_angle *= MY_PI / 180;
       iarg += 2;
-    } else if (strcmp(arg[iarg],"charge") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal fix mcemc command");
-      charge = utils::numeric(FLERR,arg[iarg+1],false,lmp);
+    } else if (strcmp(arg[iarg], "charge") == 0) {
+      if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix mcemc charge", error);
+      charge = utils::numeric(FLERR, arg[iarg + 1], false, lmp);
       charge_flag = true;
       iarg += 2;
-    } else if (strcmp(arg[iarg],"rigid") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal fix mcemc command");
-      delete [] idrigid;
-      idrigid = utils::strdup(arg[iarg+1]);
+    } else if (strcmp(arg[iarg], "rigid") == 0) {
+      if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix mcemc rigid", error);
+      delete[] idrigid;
+      idrigid = utils::strdup(arg[iarg + 1]);
       rigidflag = 1;
       iarg += 2;
-    } else if (strcmp(arg[iarg],"shake") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal fix mcemc command");
-      delete [] idshake;
-      idshake = utils::strdup(arg[iarg+1]);
+    } else if (strcmp(arg[iarg], "shake") == 0) {
+      if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix mcemc shake", error);
+      delete[] idshake;
+      idshake = utils::strdup(arg[iarg + 1]);
       shakeflag = 1;
       iarg += 2;
-    } else if (strcmp(arg[iarg],"full_energy") == 0) {
+    } else if (strcmp(arg[iarg], "full_energy") == 0) {
       full_flag = true;
       iarg += 1;
-    } else if (strcmp(arg[iarg],"group") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal fix mcemc command");
+    } else if (strcmp(arg[iarg], "group") == 0) {
+      if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix mcemc group", error);
       if (ngroups >= ngroupsmax) {
-        ngroupsmax = ngroups+1;
-        groupstrings = (char **)
-          memory->srealloc(groupstrings,
-                           ngroupsmax*sizeof(char *),
-                           "fix_mcemc:groupstrings");
+        ngroupsmax = ngroups + 1;
+        groupstrings = (char **) memory->srealloc(groupstrings, ngroupsmax * sizeof(char *),
+                                                  "fix_mcemc:groupstrings");
       }
-      groupstrings[ngroups] = utils::strdup(arg[iarg+1]);
+      groupstrings[ngroups] = utils::strdup(arg[iarg + 1]);
       ngroups++;
       iarg += 2;
-    } else if (strcmp(arg[iarg],"grouptype") == 0) {
-      if (iarg+3 > narg) error->all(FLERR,"Illegal fix mcemc command");
+    } else if (strcmp(arg[iarg], "grouptype") == 0) {
+      if (iarg + 3 > narg) utils::missing_cmd_args(FLERR, "fix mcemc grouptype", error);
       if (ngrouptypes >= ngrouptypesmax) {
-        ngrouptypesmax = ngrouptypes+1;
-        grouptypes = (int*) memory->srealloc(grouptypes,ngrouptypesmax*sizeof(int),
-                         "fix_mcemc:grouptypes");
-        grouptypestrings = (char**)
-          memory->srealloc(grouptypestrings,
-                           ngrouptypesmax*sizeof(char *),
-                           "fix_mcemc:grouptypestrings");
+        ngrouptypesmax = ngrouptypes + 1;
+        grouptypes = (int *) memory->srealloc(grouptypes, ngrouptypesmax * sizeof(int),
+                                              "fix_mcemc:grouptypes");
+        grouptypestrings = (char **) memory->srealloc(
+            grouptypestrings, ngrouptypesmax * sizeof(char *), "fix_mcemc:grouptypestrings");
       }
-      grouptypes[ngrouptypes] = utils::expand_type_int(FLERR, arg[iarg+1], Atom::ATOM, lmp);
-      grouptypestrings[ngrouptypes] = utils::strdup(arg[iarg+2]);
+      grouptypes[ngrouptypes] = utils::expand_type_int(FLERR, arg[iarg + 1], Atom::ATOM, lmp);
+      grouptypestrings[ngrouptypes] = utils::strdup(arg[iarg + 2]);
       ngrouptypes++;
       iarg += 3;
-    } else if (strcmp(arg[iarg],"intra_energy") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal fix mcemc command");
-      energy_intra = utils::numeric(FLERR,arg[iarg+1],false,lmp);
+    } else if (strcmp(arg[iarg], "intra_energy") == 0) {
+      if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix mcemc intra_energy", error);
+      energy_intra = utils::numeric(FLERR, arg[iarg + 1], false, lmp);
       iarg += 2;
-    } else if (strcmp(arg[iarg],"tfac_insert") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal fix mcemc command");
-      tfac_insert = utils::numeric(FLERR,arg[iarg+1],false,lmp);
+    } else if (strcmp(arg[iarg], "tfac_insert") == 0) {
+      if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix mcemc tfac_insert", error);
+      tfac_insert = utils::numeric(FLERR, arg[iarg + 1], false, lmp);
       iarg += 2;
-    } else if (strcmp(arg[iarg],"overlap_cutoff") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal fix mcemc command");
-      double rtmp = utils::numeric(FLERR,arg[iarg+1],false,lmp);
-      overlap_cutoffsq = rtmp*rtmp;
+    } else if (strcmp(arg[iarg], "overlap_cutoff") == 0) {
+      if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix mcemc overlap_cutoff", error);
+      double rtmp = utils::numeric(FLERR, arg[iarg + 1], false, lmp);
+      overlap_cutoffsq = rtmp * rtmp;
       overlap_flag = 1;
       iarg += 2;
-    } else if (strcmp(arg[iarg],"min") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal fix mcemc command");
-      min_ngas = utils::inumeric(FLERR,arg[iarg+1],false,lmp);
+    } else if (strcmp(arg[iarg], "min") == 0) {
+      if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix mcemc min", error);
+      min_ngas = utils::inumeric(FLERR, arg[iarg + 1], false, lmp);
       iarg += 2;
-    } else if (strcmp(arg[iarg],"max") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal fix mcemc command");
-      max_ngas = utils::inumeric(FLERR,arg[iarg+1],false,lmp);
+    } else if (strcmp(arg[iarg], "max") == 0) {
+      if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix mcemc max", error);
+      max_ngas = utils::inumeric(FLERR, arg[iarg + 1], false, lmp);
       iarg += 2;
-    } else error->all(FLERR,"Illegal fix mcemc command");
+    } else {
+      error->all(FLERR, iarg, "Unknown fix mcemc keyword {}", arg[iarg]);
+    }
   }
 }
 
@@ -435,8 +434,7 @@ FixMCEMC::~FixMCEMC()
     try {
       group->assign(group_id + " delete");
     } catch (std::exception &e) {
-      if (comm->me == 0)
-        fprintf(stderr, "Error deleting group %s: %s\n", group_id.c_str(), e.what());
+      if (comm->me == 0) utils::print(stderr, "Error deleting group {}: {}\n", group_id, e.what());
     }
   }
 
@@ -445,14 +443,13 @@ FixMCEMC::~FixMCEMC()
     try {
       group->assign(group_id + " delete");
     } catch (std::exception &e) {
-      if (comm->me == 0)
-        fprintf(stderr, "Error deleting group %s: %s\n", group_id.c_str(), e.what());
+      if (comm->me == 0) utils::print(stderr, "Error deleting group {}: {}\n", group_id, e.what());
     }
   }
 
   if (full_flag && group && neighbor) {
     int igroupall = group->find("all");
-    neighbor->exclusion_group_group_delete(exclusion_group,igroupall);
+    neighbor->exclusion_group_group_delete(exclusion_group, igroupall);
   }
 }
 
@@ -469,7 +466,7 @@ int FixMCEMC::setmask()
 
 void FixMCEMC::init()
 {
-  if (!atom->mass) error->all(FLERR, "Fix mcemc requires per atom type masses");
+  if (!atom->mass) error->all(FLERR, Error::NOLASTLINE, "Fix mcemc requires per atom type masses");
   if (atom->rmass_flag && (comm->me == 0))
     error->warning(FLERR, "Fix mcemc will use per atom type masses for velocity initialization");
 
@@ -479,15 +476,18 @@ void FixMCEMC::init()
 
   if (idregion) {
     region = domain->get_region_by_id(idregion);
-    if (!region) error->all(FLERR, "Region {} for fix mcemc does not exist", idregion);
+    if (!region)
+      error->all(FLERR, Error::NOLASTLINE, "Region {} for fix mcemc does not exist", idregion);
   }
 
   if (region) {
     if (region->bboxflag == 0)
-      error->all(FLERR,"Fix mcemc region does not support a bounding box");
+      error->all(FLERR, Error::NOLASTLINE, "Fix mcemc region {} does not support a bounding box",
+                 idregion);
     if (region->dynamic_check())
-      error->all(FLERR,"Fix mcemc region cannot be dynamic");
+      error->all(FLERR, Error::NOLASTLINE, "Fix mcemc region {} cannot be dynamic", idregion);
 
+    // clang-format off
     region_xlo = region->extent_xlo;
     region_xhi = region->extent_xhi;
     region_ylo = region->extent_ylo;
@@ -499,13 +499,13 @@ void FixMCEMC::init()
       if ((region_xlo < domain->boxlo_bound[0]) || (region_xhi > domain->boxhi_bound[0]) ||
           (region_ylo < domain->boxlo_bound[1]) || (region_yhi > domain->boxhi_bound[1]) ||
           (region_zlo < domain->boxlo_bound[2]) || (region_zhi > domain->boxhi_bound[2])) {
-        error->all(FLERR,"Fix mcemc region extends outside simulation box");
+        error->all(FLERR, "Fix mcemc region extends outside simulation box");
       }
     } else {
       if ((region_xlo < domain->boxlo[0]) || (region_xhi > domain->boxhi[0]) ||
           (region_ylo < domain->boxlo[1]) || (region_yhi > domain->boxhi[1]) ||
           (region_zlo < domain->boxlo[2]) || (region_zhi > domain->boxhi[2]))
-        error->all(FLERR,"Fix mcemc region extends outside simulation box");
+        error->all(FLERR, "Fix mcemc region extends outside simulation box");
     }
   }
 
