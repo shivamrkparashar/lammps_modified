@@ -93,7 +93,7 @@ Every *N* timesteps the fix attempts both MCEMC exchanges (insertions or
 deletions) and MC moves of gas atoms or molecules.  On those timesteps,
 the average number of attempted MCEMC exchanges is *X*, while the average
 number of attempted MC moves is *M*.  For MCEMC exchanges of either
-molecular or atomic gasses, these exchanges can be either deletions or
+molecular or atomic gases, these exchanges can be either deletions or
 insertions, with equal probability.
 
 The possible choices for MC moves are translation of an atom,
@@ -286,13 +286,15 @@ particles in the system as the average number of particles observed in
 the system. In MCEMC, there are two inputs: :math:`N_{total}` and
 :math:`V_{gauge}`.  From these two inputs, the chemical potential (and
 hence fugacity) of the system is calculated based on ideal gas chemical
-potential in the gauge cell.  Whereas, the number of particles adsorbed
+potential in the gauge cell. The number of particles adsorbed
 is simply the average number of particles observed in the system. Note
 that the choice of :math:`N_{total}` and :math:`V_{gauge}` is not
-arbitrary.  The recommendation is to choose :math:`V_{gauge}` such that
-the gauge cell should contain roughly 70-80 particles for good
-statistics.  Having a GCMC simulated isotherm a priori can help in
-determining :math:`N_{total}`.
+arbitrary. The gauge cell should be sufficiently smaller that it can
+stabilize the fluid configuration within the system but should be sufficiently
+large for accurate measurement of chemical potential. The recommendation is to 
+choose :math:`V_{gauge}` such that the gauge cell contain roughly
+70-80 particles. Generating a GCMC isotherm beforehand can help you
+choose an appropriate value of :math:`N_{total}`.
 
 The *full_energy* option means that the fix calculates the total
 potential energy of the entire simulated system, instead of just the
@@ -474,7 +476,7 @@ Note that very lengthy simulations involving insertions/deletions of
 billions of gas molecules may run out of atom or molecule IDs and
 trigger an error, so it is better to run multiple shorter-duration
 simulations.  The :doc:`reset_atoms <reset_atoms>` command can be used
-to "compress" the atom and molecuole IDs between runs.  Likewise, very
+to "compress" the atom and molecule IDs between runs.  Likewise, very
 large molecules have not been tested and may turn out to be problematic.
 
 Use of multiple *fix mcemc* commands in the same input script can be
