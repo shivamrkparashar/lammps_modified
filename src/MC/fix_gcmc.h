@@ -24,7 +24,7 @@ FixStyle(gcmc,FixGCMC);
 
 namespace LAMMPS_NS {
 
-struct NoOpTag {}; 
+struct NoOpTag {};
 
 class FixGCMC : public Fix {
  public:

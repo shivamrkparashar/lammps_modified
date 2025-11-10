@@ -78,7 +78,7 @@ command, which performs grand canonical Monte Carlo (GCMC) by exchanging
 particles with an infinite chemical potential reservoir.  MCEMC and GCMC
 give identical adsorption isotherms for microporous materials.  But for
 large pores (> 2 nm), GCMC gives a hysteretic adsorption/desorption
-isotherm, while MCEMC gives a reversible S- shaped van der Waals type
+isotherm, while MCEMC gives a reversible S-shaped van der Waals type
 isotherm, as discussed in :ref:`(Parashar) <Parashar>`.  The MCEMC
 isotherm spans the stable and meta-stable states, while GCMC samples
 only the stable states.  The MCEMC method is a middle ground between the
@@ -243,7 +243,7 @@ of the gauge cell.  The chemical potential of the gauge cell (and hence
 the system) is given by:
 
 .. math::
-    \mu^{id} = k_{B}T ln(\frac{N_{gauge}\Lambda^{3}}{V_{gauge}})
+    \mu^{id} = k_{B}T \ln(\frac{N_{gauge}\Lambda^{3}}{V_{gauge}})
 
 where :math:`k_{B}` is the Boltzmann constant, :math:`\Lambda` is the
 thermal de Broglie wavelength of the ideal gas particles at temperature
@@ -291,7 +291,7 @@ is simply the average number of particles observed in the system. Note
 that the choice of :math:`N_{total}` and :math:`V_{gauge}` is not
 arbitrary. The gauge cell should be sufficiently smaller that it can
 stabilize the fluid configuration within the system but should be sufficiently
-large for accurate measurement of chemical potential. The recommendation is to 
+large for accurate measurement of chemical potential. The recommendation is to
 choose :math:`V_{gauge}` such that the gauge cell contain roughly
 70-80 particles. Generating a GCMC isotherm beforehand can help you
 choose an appropriate value of :math:`N_{total}`.

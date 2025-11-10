@@ -27,8 +27,7 @@ namespace LAMMPS_NS {
 
 class FixMCEMC : public FixGCMC {
  public:
-  FixMCEMC(class LAMMPS *, int, char **);    // constructor
-
+  FixMCEMC(class LAMMPS *, int, char **);
  protected:
   int &nmcemc_type;           // reference to base class type member
   int &mcemc_nmax;            // reference to base max atoms
@@ -43,8 +42,7 @@ class FixMCEMC : public FixGCMC {
   void attempt_atomic_deletion_full() override;      // delete atom with full energy calculation
   void attempt_atomic_insertion_full() override;     // insert atom with full energy calculation
   void attempt_molecule_deletion_full() override;    // delete molecule with full energy calculation
-  void
-  attempt_molecule_insertion_full() override;    // insert molecule with full energy calculation
+  void attempt_molecule_insertion_full() override;    // insert molecule with full energy calculation
 };
 
 }    // namespace LAMMPS_NS
