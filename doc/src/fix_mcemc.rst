@@ -21,7 +21,11 @@ Syntax
 * Vgauge = gauge volume for MCEMC exchanges (volume units)
 * Ntotal = total number of atoms in the system (positive integer)
 * displace = maximum Monte Carlo translation distance (length units)
-* keyword values = args for :doc:`fix gcmc <fix_gcmc>` command (optional)
+* keyword/value pairs = See :doc:`fix gcmc <fix_gcmc>` for descriptions of keywords such as
+   *mol*, *region*, *maxangle*, *full_energy*, *charge*, *group*, *grouptype*,
+   *intra_energy*, *tfac_insert*, *overlap_cutoff*, *max*, *min*, *mcmoves*,
+   *rigid*, and *shake* (optional). *pressure* and *fugacity_coeff* keywords are not
+   valid for this fix.
 
 Examples
 """"""""
@@ -37,37 +41,35 @@ Description
 
 .. versionadded:: TBD   
 
-This fix performs mesocanonical Monte Carlo (MCEMC) also known as gauge
-cell simulation by exchanging particles with a finite volume ideal gas
-reservoir (gauge cell) at the same temperature as the system as
-discussed in :ref:`(Parashar) <Parashar>`.  It also attempts Monte Carlo
+This fix performs mesocanonical Monte Carlo (MCEMC), also known as gauge cell
+simulation, by exchanging particles with a finite-volume ideal gas
+reservoir (gauge cell) at the same temperature as the system, as
+discussed in :ref:`(Parashar) <Parashar>`. It also attempts Monte Carlo
 moves (translations and rotations) of particles within the simulation
-cell similar to :doc:`fix gcmc <fix_gcmc>`.  Specific uses of this fix are to compute the adsorption isotherm
-in porous materials or to compute the vapor-liquid equilibrium of
-fluids.  This fix is complementary to the :doc:`fix gcmc <fix_gcmc>`
-command, which performs grand canonical Monte Carlo (GCMC) by exchanging
-particles with an infinite chemical potential reservoir.  MCEMC and GCMC
-give identical adsorption isotherms for microporous materials.  But for
-large pores (> 2 nm), GCMC gives a hysteretic adsorption/desorption
-isotherm, while MCEMC gives a reversible S-shaped van der Waals type
-isotherm, as discussed in :ref:`(Parashar) <Parashar>`.  The MCEMC
-isotherm spans the stable and meta-stable states, while GCMC samples
-only the stable states.  The MCEMC method is a middle ground between the
-grand canonical ensemble which permits unlimited fluctuations, and the
-canonical ensemble, which considers a closed system.  MCEMC simulations
-generate adsorption isotherms equivalent to the canonical ensemble
-isotherms with an accuracy of one molecule.  MCEMC is equivalent to GCMC
-when the gauge cell volume is infinite and is equivalent to the
-canonical ensemble when gauge cell volume is zero.
+cell, similar to :doc:`fix gcmc <fix_gcmc>`. Specific uses of this fix
+include computing adsorption isotherms in porous materials and
+computing vapor–liquid equilibrium of fluids. MCEMC is complementary to
+:doc:`fix gcmc <fix_gcmc>`, which performs grand canonical Monte Carlo
+(GCMC) by exchanging particles with an infinite chemical-potential
+reservoir. MCEMC and GCMC give identical adsorption isotherms for
+microporous materials. For larger pores (> 2 nm), GCMC often shows a
+hysteretic adsorption/desorption isotherm, while MCEMC yields a
+reversible S-shaped van der Waals type isotherm (see :ref:`(Parashar)
+<Parashar>`). The MCEMC isotherm spans stable and meta-stable states,
+whereas GCMC samples only stable states. MCEMC lies between the grand
+canonical ensemble (unrestricted fluctuations) and the canonical
+ensemble (closed system). MCEMC reduces to GCMC when the gauge-cell volume
+is infinite and to the canonical ensemble when the gauge-cell volume is
+zero.
 
-The syntax for this command is mostly identical to that of :doc:`fix gcmc <fix_gcmc>`,
-with the following exceptions: fix mcemc requires the Vgauge and Ntotal arguments
-replaceing the mu argument of fix gcmc. The outputs are similar in both simulations:
-the histogram of the number of particles from which the average number of particles can be computed.
-For gcmc, the chemical potential is an input and the average number of particles is an output.
-For mcemc, the total number of particles and gauge volume are inputs, the chemical potential is calculated
-based on ideal gas chemical potential in the gauge cell, and the average number of particles is calculated 
-based on average number of particles observed in the system.
+The syntax and operation are mostly identical to :doc:`fix gcmc <fix_gcmc>`,
+except that fix mcemc requires *Vgauge* and *Ntotal* in place of the *mu*
+(chemical potential) argument used by *fix gcmc*. For operational details
+that are common to both commands (particle insertion, MC moves, region
+handling, keyword usage), see the :doc:`fix gcmc <fix_gcmc>` documentation.
+
+MCEMC Theory
+"""""""""""""
 
 During the MCEMC exchange move, the particles are exchanged between the
 system and a finite ideal gas reservoir (gauge cell) such that the total
@@ -123,24 +125,28 @@ The acceptance probability for particle deletion from system is given by:
 
    acc(N \rightarrow N-1) = \min\left(1, \frac{V_{gauge} N}{(N_{gauge}+1) V} \exp(-\beta[E(N)-E(N-1)])\right)
 
-In GCMC, the chemical potential of the infinite reservoir is imposed on
+Where :math:`V` is the volume of the simulation system, :math:`N` is the
+current number of particles in the simulation system. 
+In GCMC, the chemical potential of the infinite ideal gas reservoir is imposed on
 the system using the exchange move, while in MCEMC, the gauge cell
-(which is assumed to be an ideal gas) is used to measure the chemical
-potential of the system and it is not explicitly simulated. In GCMC, the only input is the chemical
-potential of the infinite reservoir and one can obtain the number of
-particles in the system as the average number of particles observed in
+(also assumed to be an ideal gas) is used to measure the chemical
+potential of the system and it is not explicitly simulated. 
+For calculating adsorption isotherm using GCMC, the input is the chemical
+potential of the infinite reservoir and the output is the average number of particles observed in
 the system. In MCEMC, there are two inputs: :math:`N_{total}` and
 :math:`V_{gauge}`.  From these two inputs, the chemical potential (and
 hence fugacity) of the system is calculated based on ideal gas chemical
-potential in the gauge cell. The number of particles adsorbed
+potential in the gauge cell. The number of particles adsorbed 
 is simply the average number of particles observed in the system. Note
 that the choice of :math:`N_{total}` and :math:`V_{gauge}` is not
-arbitrary. The gauge cell should be sufficiently smaller that it can
-stabilize the fluid configuration within the system but should be sufficiently
-large for accurate measurement of chemical potential. The recommendation is to
-choose :math:`V_{gauge}` such that the gauge cell contain roughly
-70-80 particles. Generating a GCMC isotherm beforehand can help you
-choose an appropriate value of :math:`N_{total}`.
+arbitrary. 
+
+The gauge cell should be small enough to stabilize the fluid configuration
+within the system yet large enough for accurate measurement of chemical 
+potential. The recommendation is to calculate :math:`V_{gauge}` using the
+ideal gas equation, such that the gauge cell contain roughly 70-80 particles
+during a simulation. Generating a GCMC isotherm beforehand can help you choose an 
+appropriate value of :math:`N_{total}`.
 
 
 Restrictions
