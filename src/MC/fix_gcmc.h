@@ -24,6 +24,8 @@ FixStyle(gcmc,FixGCMC);
 
 namespace LAMMPS_NS {
 
+struct NoOpTag {};
+
 class FixGCMC : public Fix {
  public:
   FixGCMC(class LAMMPS *, int, char **);
@@ -37,7 +39,13 @@ class FixGCMC : public Fix {
   void restart(char *) override;
   void *extract(const char *, int &) override;
 
- private:
+ protected:
+  // no-op constructor so derived classes can skip base parsing/initialization
+  FixGCMC(LAMMPS *lmp, int narg, char ** arg, NoOpTag nooptag) : Fix(lmp, narg, arg), region(nullptr), idregion(nullptr), full_flag(false),
+    groupstrings(nullptr), grouptypestrings(nullptr), grouptypebits(nullptr), grouptypes(nullptr),
+    local_gas_list(nullptr), molcoords(nullptr), molq(nullptr), molimage(nullptr),
+    random_equal(nullptr), random_unequal(nullptr), fixrigid(nullptr), fixshake(nullptr),
+    idrigid(nullptr), idshake(nullptr) {};
   int molecule_group, molecule_group_bit;
   int molecule_group_inversebit;
   int exclusion_group, exclusion_group_bit;
@@ -125,19 +133,19 @@ class FixGCMC : public Fix {
   void options(int, char **);
 
   void attempt_atomic_translation();
-  void attempt_atomic_deletion();
-  void attempt_atomic_insertion();
+  virtual void attempt_atomic_deletion();
+  virtual void attempt_atomic_insertion();
   void attempt_molecule_translation();
   void attempt_molecule_rotation();
-  void attempt_molecule_deletion();
-  void attempt_molecule_insertion();
+  virtual void attempt_molecule_deletion();
+  virtual void attempt_molecule_insertion();
   void attempt_atomic_translation_full();
-  void attempt_atomic_deletion_full();
-  void attempt_atomic_insertion_full();
+  virtual void attempt_atomic_deletion_full();
+  virtual void attempt_atomic_insertion_full();
   void attempt_molecule_translation_full();
   void attempt_molecule_rotation_full();
-  void attempt_molecule_deletion_full();
-  void attempt_molecule_insertion_full();
+  virtual void attempt_molecule_deletion_full();
+  virtual void attempt_molecule_insertion_full();
 
   double energy(int, int, tagint, double *);
   double energy_full();

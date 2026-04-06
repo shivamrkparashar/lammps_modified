@@ -972,6 +972,8 @@
 /fix_lb_viscous.h
 /fix_load_report.cpp
 /fix_load_report.h
+/fix_mcemc.cpp
+/fix_mcemc.h
 /fix_meso.cpp
 /fix_meso.h
 /fix_meso_move.cpp
